@@ -2,6 +2,7 @@ from numpy import matrix, array, empty
 from random import shuffle
 
 import global_constants as gc
+import structs
 
 def formation_matrix_units(count_str: int, vec_count_units_for_str: list):
   """
@@ -305,3 +306,32 @@ def formation_std_raw_data():
   return vec_seq  , step_seq, max_seq , \
          vec_l_psk, vec_t_oi, vec_t_as, \
          mat_t_str, mat_kps , mat_sync, mat_pps, mat_prior, mat_pvs
+
+def formation_vec_structs_e_str():
+  """
+  Функция формирует вектор, который включается в себя все существующие строки
+  с эпизодической информацией.
+  
+  Вых. аргументы:
+    # vec_structs_e_str - вектор, который включает в себя все существующие строки
+                          с ЭпИ
+  """
+  ind_sig_for_str_13 = array([gc.DIC_NAME_SIG_IN_IND["L1SC"], gc.DIC_NAME_SIG_IN_IND["L2SC"]])
+  string_13 = structs.STRUCT_E_STR(13, ind_sig_for_str_13, array(["L1SC", "L2SC"])
+                                  ,"УИ-ФЦ", "Координаты ФЦА")
+  ind_all_sig = list(range(4))
+  string_16 = structs.STRUCT_E_STR(16, ind_all_sig, gc.ALL_SIGNALS, "УИ-УР"
+                                  ,"Параметры ориентации КА в режиме УР")
+  string_25 = structs.STRUCT_E_STR(25, ind_all_sig, gc.ALL_SIGNALS, "УИ-ПВЗ"
+                                  ,"ПВЗ, параметры модели ионосферы, параметры \
+                                   модели расхождения шкал времени UTC(SU) и TAI")
+  string_31 = structs.STRUCT_E_STR(31, ind_all_sig, gc.ALL_SIGNALS, "УИ-ПУМД"
+                                  ,"ПУМД")
+  string_32 = structs.STRUCT_E_STR(32, ind_all_sig, gc.ALL_SIGNALS, "УИ-ПУМД"
+                                  ,"ПУМД")       
+  string_50 = structs.STRUCT_E_STR(50, gc.DIC_NAME_SIG_IN_IND["L1OC"], "L1OC"
+                                  ,"УИ-КС", "КС")
+  string_60 = structs.STRUCT_E_STR(60, ind_all_sig, gc.ALL_SIGNALS, "УИ-ТС", "ТС")
+  vec_structs_e_str = [string_13, string_16, string_25, string_31, string_32
+                      ,string_50, string_60]                                                           
+  return array(vec_structs_e_str)
