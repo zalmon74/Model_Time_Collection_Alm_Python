@@ -1,4 +1,4 @@
-from numpy import arange, array 
+from numpy import array 
 
 class STRUCT_MI_N():
   """
@@ -28,6 +28,21 @@ class STRUCT_MI_N():
     self.t_oi     = t_oi
     self.t_as     = t_as
     self.vec_n_as = vec_n_as
+  
+  def print_all_fields(self):
+    """
+    Метод печати на экран всех полей объекта
+    """
+    print_str = f"{self.n_ka_sys=} \n"
+    print_str += f"{self.n_ka_con=} \n"
+    print_str += f"{self.type_sig=} \n"
+    print_str += f"{self.name_sig=} \n"
+    print_str += f"{self.l_as=} \n"
+    print_str += f"{self.l_psk=} \n"
+    print_str += f"{self.t_oi=} \n"
+    print_str += f"{self.t_as=} \n"
+    print_str += f"{self.vec_n_as=} \n"
+    print(print_str)
 
 class STRUCT_E_STR():
   """
@@ -48,6 +63,18 @@ class STRUCT_E_STR():
     self.name_sig = name_sig
     self.name_si  = name_si
     self.content  = content
+  
+  def print_all_fields(self):
+    """
+    Метод печати на экран всех полей объекта
+    """
+    print_str = f"{self.type_str=} \n"
+    print_str += f"{self.type_sig=} \n"
+    print_str += f"{self.name_sig=} \n"
+    print_str += f"{self.name_sig=} \n"
+    print_str += f"{self.name_si=} \n"
+    print_str += f"{self.content=} \n"
+    print(print_str)
 
 class STRUCT_MI_EPI():
   """
@@ -86,3 +113,21 @@ class STRUCT_MI_EPI():
     self.pps      = pps  
     self.prior    = prior
     self.pvs      = pvs
+  
+  def print_all_fields(self):
+    """
+    Метод печати на экран всех полей объекта
+    """
+    print_str = f"{self.n_ka_sys=} \n"
+    print_str += f"{self.n_ka_con=} \n"
+    print_str += f"{self.type_str=} \n"
+    print_str += f"{self.type_sig=} \n"
+    print_str += f"{self.name_sig=} \n"
+    print_str += f"{self.t_oi=} \n"
+    print_str += f"{self.kps=} \n"
+    print_str += f"{self.sync=} \n"
+    print_str += f"{self.pps=} \n"
+    print_str += f"{self.prior=} \n"
+    print_str += f"{self.pvs=} \n"
+    print(print_str)
+  
