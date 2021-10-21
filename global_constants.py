@@ -1,9 +1,15 @@
-import numpy as np
+from numpy import array
 
 # Вектор, который хранит в себе имена сигналов
-ALL_SIGNALS = np.array(["L3OC", "L2SC", "L1SC", "L1OC"])
+ALL_SIGNALS = array(["L3OC", "L1SC", "L2SC", "L1OC"])
+# Словарь, который хранит в себе сопоставление имени сигнала и время передачи 
+# в сек.
+DIC_NAME_SIG_IN_TRANS_TIME = {"L3OC" : 3
+                             ,"L1SC" : 2
+                             ,"L2SC" : 2
+                             ,"L1OC" : 2}
 # Вектор, который хранит в себе номера строк
-ALL_STRINGS = np.array([13, 16, 25, 31, 32, 50, 60])
+ALL_STRINGS = array([13, 16, 25, 31, 32, 50, 60])
 # Значение, с которого начинается условный номер КА
 NUM_CON_ALM = 700
 # Условное значение, которое определяет, что данная строка не может передоваться
@@ -51,4 +57,9 @@ DIC_IND_STR_IN_IND_SIG_NOT_BEL = {
                                   DIC_NUM_STR_IN_IND[13] : [DIC_NAME_SIG_IN_IND["L3OC"], DIC_NAME_SIG_IN_IND["L1OC"]]
                                  ,DIC_NUM_STR_IN_IND[50] : [DIC_NAME_SIG_IN_IND["L3OC"], DIC_NAME_SIG_IN_IND["L1SC"], DIC_NAME_SIG_IN_IND["L2SC"]]
                                  }
-                                 
+# Время в сек. на формирование ЦИ
+MAX_TIME = 3600 
+# Максимальное количество альманаха
+MAX_COUNT_ALM = 63
+# Вектор, содержащий номера строк с ОИ
+VEC_NUM_OI = array([10, 11, 12])

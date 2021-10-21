@@ -3,6 +3,7 @@ import numpy as np
 import global_constants as gc
 import support_function as sf
 import functions as f
+import imitator_bink as ib
 
 def main():
 
@@ -37,6 +38,7 @@ def main():
   arr_mi_epi = f.formation_arr_obj_mi_epi(count_sat, mat_av_str_for_sig, mat_t_str
                                          ,mat_kps, mat_sync, mat_pps, mat_prior
                                          ,mat_pvs)
+  ci = ib.imitator_bink(mat_mi_n, arr_mi_epi)
 
 if (__name__) == ("__main__"):
   main()

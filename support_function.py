@@ -335,3 +335,23 @@ def formation_vec_structs_e_str():
   vec_structs_e_str = [string_13, string_16, string_25, string_31, string_32
                       ,string_50, string_60]                                                           
   return array(vec_structs_e_str)
+
+def my_round_vec(vec_val):
+  """
+  Функция округления вектор каждого эл. до ближайшего целого
+
+  Вх. аргументы:
+    # vec_val - вектор, которой необходимо окргулить
+
+  Вых. аргументы:
+    # vec_out - округленный вектор
+  """
+  vec_out = empty(vec_val.size, dtype=int)
+  # Перебор эл. вектора
+  for ind in range(vec_val.size):
+    el = vec_val[ind]
+    if (el > int(el)):
+      vec_out[ind] = int(el)+1
+    else:
+      vec_out[ind] = int(el)
+  return vec_out

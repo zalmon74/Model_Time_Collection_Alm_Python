@@ -1,4 +1,4 @@
-from numpy import mat, matrix, array, empty, full
+from numpy import matrix, array, empty, full
 
 import global_constants as gc
 import structs
@@ -107,12 +107,12 @@ def formation_arr_obj_mi_epi(count_sat: int, mat_av_str_for_sig: matrix
     # mat_pvs   - матрица с порядком включения строк
 
   # Вых. аргументы:
-    # mat_mi_epi - сформированная матрица
+    # arr_mi_epi - сформированная матрица
   """
   # Определяем кол-во строк и сигналов
   count_str, count_sig = mat_av_str_for_sig.shape
    # Формируем матрицу, которая будет содержать необходимые объекты
-  mat_mi_epi = empty([count_sat, count_str, count_sig], dtype=structs.STRUCT_MI_EPI)
+  arr_mi_epi = empty([count_sat, count_str, count_sig], dtype=structs.STRUCT_MI_EPI)
   # Цикл перебора КА
   for ind_sat in range(count_sat):
     # Цикл перебора строк
@@ -122,7 +122,7 @@ def formation_arr_obj_mi_epi(count_sat: int, mat_av_str_for_sig: matrix
         # Если строка для данного сигнала не может существовать, то идем дальше
         if (mat_av_str_for_sig[ind_str, ind_sig] == gc.NOT_BEL_STR):
           continue
-        mat_mi_epi[ind_sat, ind_str, ind_sig] = structs.STRUCT_MI_EPI(
+        arr_mi_epi[ind_sat, ind_str, ind_sig] = structs.STRUCT_MI_EPI(
                                                                       ind_sat+1
                                                                      ,ind_sat+1+gc.NUM_CON_ALM
                                                                      ,gc.DIC_IND_STR_IN_STR[ind_sig]
@@ -135,4 +135,4 @@ def formation_arr_obj_mi_epi(count_sat: int, mat_av_str_for_sig: matrix
                                                                      ,mat_prior[ind_str, ind_sig]
                                                                      ,mat_pvs[ind_str, ind_sig]
                                                                      )
-  return mat_mi_epi
+  return arr_mi_epi
