@@ -63,3 +63,7 @@ MAX_TIME = 3600
 MAX_COUNT_ALM = 63
 # Вектор, содержащий номера строк с ОИ
 VEC_NUM_OI = array([10, 11, 12])
+# путь до файла с ЦИ
+PATH_TO_CI_FILE="./../ci/"
+# Кодирока файла с ЦИ
+ENCODING_FOR_FILE = "utf-8"

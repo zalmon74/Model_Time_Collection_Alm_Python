@@ -39,6 +39,7 @@ def main():
                                          ,mat_kps, mat_sync, mat_pps, mat_prior
                                          ,mat_pvs)
   ci = ib.imitator_bink(mat_mi_n, arr_mi_epi)
+  f.save_ci_in_file(ci)
 
 if (__name__) == ("__main__"):
   main()

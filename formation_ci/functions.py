@@ -1,4 +1,6 @@
 from numpy import matrix, array, empty, full
+import json
+import datetime
 
 import global_constants as gc
 import structs
@@ -136,3 +138,15 @@ def formation_arr_obj_mi_epi(count_sat: int, mat_av_str_for_sig: matrix
                                                                      ,mat_pvs[ind_str, ind_sig]
                                                                      )
   return arr_mi_epi
+
+def save_ci_in_file(ci):
+  """
+  Функция сохранения ЦИ в файл типа json.
+
+  Вх. аргументы:
+    # ci - ЦИ, которую необходимо записать
+  """
+  time = datetime.datetime
+  path_file = gc.PATH_TO_CI_FILE+"ci_"+time.today().strftime('%Y_%m_%d_%H_%M_%S')+".json"
+  with open(path_file, "w", encoding=gc.ENCODING_FOR_FILE) as file:
+    json.dump(ci, file, indent=2) 

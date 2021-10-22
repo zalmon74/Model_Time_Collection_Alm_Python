@@ -231,16 +231,20 @@ def generator_ci_for_all_sat(mat_av_sig_for_sat: matrix, vec_count_psk: array
     # mat_pps   - матрица со значениями периода повтороения строк
     # mat_kps   - матрица со значениями количества повторов строк
     # mat_prior - матрица со значениями приоритетов строк
+
+  Вых. аргументы:
+    # dic_ci - ЦИ в виде словаря, где ключ это номер КА, а данные словарь с
+               сигналами с ЦИ
   """
   count_sat, count_sig, count_max_alm = arr_n_as.shape
-  ci = zeros([count_sat, count_sig, gc.MAX_TIME])
+  ci = {}
   # Цикл перебора КА
   for ind_sat in range(count_sat):
-    ci[ind_sat] = generator_ci_for_all_signals(mat_av_sig_for_sat[ind_sat, :]
-                                              ,vec_count_psk ,vec_l_psk
-                                              ,arr_n_as[ind_sat, :, :], mat_sync
-                                              ,mat_pps, mat_kps, mat_prior
-                                              ,count_sat)
+    ci[ind_sat+1] = generator_ci_for_all_signals(mat_av_sig_for_sat[ind_sat, :]
+                                                ,vec_count_psk ,vec_l_psk
+                                                ,arr_n_as[ind_sat, :, :], mat_sync
+                                                ,mat_pps, mat_kps, mat_prior
+                                                ,count_sat)
   return ci
 
 def generator_ci_for_all_signals(vec_av_sig_for_sat: array, vec_count_psk: array
@@ -262,20 +266,22 @@ def generator_ci_for_all_signals(vec_av_sig_for_sat: array, vec_count_psk: array
     # count_psk - кол-во КА
 
   Вых. аргументы:
-    # ci_for_sat - сформированная ЦИ для одного КА
+    # ci_for_sat - сформированная ЦИ для одного КА в виде словаря, где
+                   ключ: имя сигнала, а данные ЦИ
   """
   count_sig = nonzero(vec_av_sig_for_sat != None)[0].size
-  ci_for_sat = zeros([count_sig, gc.MAX_TIME], dtype=int)
+  ci_for_sat = {}
   # Цикл перебора сигналов
   for ind_sig in range(count_sig):
-    ci_for_sat[ind_sig] = generator_ci_for_signal(vec_count_psk[ind_sig]
-                                       ,vec_l_psk[ind_sig]
-                                       ,mat_sync[:, ind_sig]
-                                       ,mat_pps[:, ind_sig], mat_kps[:, ind_sig]
-                                       ,mat_prior[:, ind_sig]
-                                       ,mat_n_as[ind_sig, :]
-                                       ,gc.DIC_NAME_SIG_IN_TRANS_TIME[gc.DIC_IND_SIG_IN_NAME[ind_sig]]
-                                       ,count_sat)
+    name_sig = gc.DIC_IND_SIG_IN_NAME[ind_sig]
+    ci_for_sat[name_sig] = generator_ci_for_signal(vec_count_psk[ind_sig]
+                                                  ,vec_l_psk[ind_sig]
+                                                  ,mat_sync[:, ind_sig]
+                                                  ,mat_pps[:, ind_sig], mat_kps[:, ind_sig]
+                                                  ,mat_prior[:, ind_sig]
+                                                  ,mat_n_as[ind_sig, :]
+                                                  ,gc.DIC_NAME_SIG_IN_TRANS_TIME[name_sig]
+                                                  ,count_sat)
   return ci_for_sat
 
 def generator_ci_for_signal(count_psk: int, size_psk: int, vec_sync: array
@@ -296,7 +302,7 @@ def generator_ci_for_signal(count_psk: int, size_psk: int, vec_sync: array
     # count_sat - количество КА
 
   Вых. аргументы:
-    # vec_ci_sig - сформированный вектор с ЦИ
+    # vec_ci_sig - сформированный список с ЦИ
   """
   # Формируем словарь, который содержит сопоставление номера ПСК номера строк
   # строк с ЭИ, которые передаются в нем
@@ -308,7 +314,7 @@ def generator_ci_for_signal(count_psk: int, size_psk: int, vec_sync: array
   tr_psk  = 0 # Номер передаваемого ПСК
   tr_ind_alm = 0 # Индекс последнего переданного альманаха
   vec_tr_epi = zeros(count_str) # Вектор, с кол-вом переданных строк с ЭИ
-  vec_ci_sig = zeros(gc.MAX_TIME, dtype=int) # Вектор с сформированной ЦИ 
+  vec_ci_sig = [0 for _ in range(gc.MAX_TIME)]
   # Вектор содержит номер последеного ПСК в котором передавалась данная строка
   vec_last_psk_tr_str = zeros(count_str)
   time = 0
@@ -316,7 +322,7 @@ def generator_ci_for_signal(count_psk: int, size_psk: int, vec_sync: array
   while (time < gc.MAX_TIME):
     # Условие передачи ОИ в ПСК
     if (tr_slot < gc.VEC_NUM_OI.size):
-      vec_ci_sig[time] = gc.VEC_NUM_OI[tr_slot]
+      vec_ci_sig[time] = int(gc.VEC_NUM_OI[tr_slot])
       # Проверка на передачу одного слота соот. сигнала
       # +1, т. к. нумерация осуществляется с 0
       if (((time+1) % time_slot) == 0):
@@ -337,7 +343,7 @@ def generator_ci_for_signal(count_psk: int, size_psk: int, vec_sync: array
           ind_str = gc.DIC_NUM_STR_IN_IND[num_str]
           # Локальный цикл по времени для затаскивания в ПСК полную строку
           for l_time in range(time_slot):
-            vec_ci_sig[time] = num_str
+            vec_ci_sig[time] = int(num_str)
             time += 1
           # Заполняем соот. переменные о том, что строка была передана
           vec_tr_epi[ind_str] += 1
@@ -358,7 +364,7 @@ def generator_ci_for_signal(count_psk: int, size_psk: int, vec_sync: array
         ind_alm = tr_ind_alm
         # Локальный цикл по времени для формирования слота
         for l_time in range(time_slot):
-          vec_ci_sig[time] = vec_n_as[ind_alm] + gc.NUM_CON_ALM
+          vec_ci_sig[time] = int(vec_n_as[ind_alm] + gc.NUM_CON_ALM)
           time += 1
           # Проверка на окончание формирования по времени
           if (time >= gc.MAX_TIME):
