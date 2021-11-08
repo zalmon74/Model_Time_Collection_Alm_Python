@@ -1,9 +1,15 @@
 import math
-from re import split 
+import time
+import datetime
+from pathlib import Path 
+from re import split
+from json import dump, load, JSONDecodeError
+
+from numpy import array
 
 import global_constants as gc
 
-def alm_glo(ti, n, na, ta_lym, dta, ddta, lyma, oma, epsa, dia):
+def calcultion_coor_alm_glo(ti, n, na, ta_lym, dta, ddta, lyma, oma, epsa, dia):
   """
   Функция расчета координат и скоростей КА по данным альманаха.
   Метод расчета взят из ИКД 2016 г. для кодовых сигналов 
@@ -229,3 +235,302 @@ def read_my_alm_file(name_file):
     l_ddta.append(float(list_text_in_file[gc.IND_DDTA_FIRST+ind_sat*gc.COUNT_PAR_IN_STR]))
   return time_beg, na, count_sat, l_lett, l_ta_lym, l_tau_n, l_lyma, l_dia,\
          l_oma, l_eps, l_dta, l_ddta
+
+def read_file_di(path_file: str):
+  """
+  Функция чтения файла, который содержит ЦИ.
+
+  Вх. аргументы:
+    # path_file - путь до файла с ЦИ
+
+  # Вых. аргументы:
+    # dic_ci - считанный словарь с ЦИ
+  """
+  try: # Считываем содержимое файла
+    with open(path_file, "r", encoding="utf-8") as file:
+      dic_ci = load(file)
+  # Если файл отсутствует, то возвращаем None
+  except (FileNotFoundError, JSONDecodeError):
+    dic_ci = None 
+  return dic_ci
+
+def blh2xyz(coor_blh: tuple, a: float = gc.R_EARTH, ex: float = gc.E_EARTH):
+  """
+  Функция перевода координат из геодезической СК в геоцентрическую СК.
+
+  Вх. аргументы:
+    # coor_blh - кортеж с координатами в геодезической СК ([0] - широта
+                                                           [1] - долгота
+                                                           [2] - высота) в рад.
+    # a  - радиус Земли
+    # ex - эксцентриситет Земли
+
+  Вых. аргументы:
+    # coor_xyz - кортеж с координатами в геоцентрической СК 
+  """
+  # Переводим в рад.
+  B, L, H = coor_blh
+  N = a/math.sqrt(1-ex**2*math.sin(B))
+  X = (N+H)*math.cos(B)*math.cos(L)
+  Y = (N+H)*math.cos(B)*math.sin(L)
+  Z = ((1-ex**2)*N+H)*math.sin(B)
+  return (X, Y, Z)
+
+def calculation_um(coor_sat, coor_pos):
+  """
+  Функция расчета угла места между КА и тек. позицией
+
+  Вх. аргументы:
+    # coor_sat - координаты КА
+    # coor_pos - координаты антенны, которая принимает альманах
+
+  Вых. аргументы:
+    # um - рассчитанный УМ в град.
+  """
+  rang = math.sqrt((coor_sat[0] - coor_pos[0])**2+\
+                   (coor_sat[1] - coor_pos[1])**2+\
+                   (coor_sat[2] - coor_pos[2])**2)
+  kx = (coor_sat[0]-coor_pos[0])/rang
+  ky = (coor_sat[1]-coor_pos[1])/rang
+  kz = (coor_sat[2]-coor_pos[2])/rang
+  um = math.asin((kx*coor_pos[0]+ky*coor_pos[1]+kz*coor_pos[2])/\
+                  math.sqrt(coor_pos[0]**2+coor_pos[1]**2+coor_pos[2]**2))*180/math.pi
+  return um
+
+def formation_dict_f_receiv_alm(count_sat):
+  """
+  Функция создания словарь, который будет след. типа:
+  dict = {(lat, lon) : array(Bool(range(count_sat)))}
+  lat - значение широты
+  lon - значение долготы
+  array(range(count_sat, Bool)) - вектор, который хранит в себе флаг принятия
+                                  альманаха для конкретного КА
+
+  Вх. аргументы:
+    # count_sat - количество КА
+  Вых. аргументы:
+    # form_dic - сформированный словарь
+  """
+  list_for_dic = [False for _ in range(count_sat)]
+  from_dic = {}
+  # Цикл по широте
+  for lat in range(gc.START_LATITUDE, gc.END_LATITUDE, gc.STEP_LATITUDE):
+    # Цикл по долготе
+    for lon in range(gc.START_LONGITUDE, gc.END_LONGITUDE, gc.STEP_LONGITUDE):
+      from_dic[(lat, lon)] = array(list_for_dic)
+  return from_dic
+
+def formation_dict_time_rec_alm():
+  """
+  Функция создания словаря, который будет след. типа
+  dict = {(lat, lon) : int(time)}
+  lat - значение широты
+  lon - значение долготы
+  time - текущее время приема полного альманаха
+
+  Вых. аргументы:
+    # from_dic - сформированный словарь
+  """
+  from_dic = {}
+  # Цикл по широте
+  for lat in range(gc.START_LATITUDE, gc.END_LATITUDE, gc.STEP_LATITUDE):
+    # Цикл по долготе
+    for lon in range(gc.START_LONGITUDE, gc.END_LONGITUDE, gc.STEP_LONGITUDE):
+      from_dic[(lat, lon)] = 0
+  return from_dic
+
+def formation_dict_list_time_rec_alm():
+  """
+  Функция создания словарь, который будет след. типа
+  dict = {(lat, lon) : []}
+  lat - значение широты
+  lon - значение долготы
+  [] - пустой список, который будет содержать времена приема полного альманаха
+
+  Вых. аргументы:
+    # from_dic - сформированный словарь
+  """
+  from_dic = {}
+  # Цикл по широте
+  for lat in range(gc.START_LATITUDE, gc.END_LATITUDE, gc.STEP_LATITUDE):
+    # Цикл по долготе
+    for lon in range(gc.START_LONGITUDE, gc.END_LONGITUDE, gc.STEP_LONGITUDE):
+      from_dic[(lat, lon)] = []
+  return from_dic
+
+def modeling_receiv_alm():
+  """
+  Функция моделирования принятия альманаха.
+  """
+  # Формируем словарь, который будет содержать время приема текущего альманаха
+  # для каждой точки
+  dic_time_rec_alm = formation_dict_time_rec_alm()
+  # Формируем словарь, который будет содержать список времен приема полного
+  # альманаха
+  dic_list_time_rec_alm = formation_dict_list_time_rec_alm()
+  # Формируем имя файла с ЦИ
+  path_file_di = gc.PATH_DI_FILE
+  # Считываем ЦИ с файла
+  dic_ci = read_file_di(path_file_di)
+  # Если такого файла нет или он пустой, то сообщаем об этом
+  if (dic_ci == None):
+    raise Exception(f"Файлс с ЦИ ({path_file_di}) отсутствует или пуст")
+  # Считываем альманах с файла
+  tup_alm = read_my_alm_file(gc.PATH_ALM+gc.STD_NAME_ALM_FILE)
+  # Формируем словарь, который будет содержать флаги принятия альманаха для соот.
+  # точки
+  dic_f_receiv_alm = formation_dict_f_receiv_alm(tup_alm[2])
+  # Основной цикл по времени
+  for time in range(gc.TIME_MODELING):
+    # Цикл по широте
+    for lat in range(gc.START_LATITUDE, gc.END_LATITUDE, gc.STEP_LATITUDE):
+      # Цикл по долготе
+      for lon in range(gc.START_LONGITUDE, gc.END_LONGITUDE, gc.STEP_LONGITUDE):
+        modeling_receiv_alm_one_point(time, tup_alm
+                                     ,(lat, lon), dic_ci
+                                     ,dic_f_receiv_alm[(lat, lon)]
+                                     ,dic_time_rec_alm, dic_list_time_rec_alm)
+  # Сохраняем полученный словарь в файл
+  path_name_save_dic = gc.PATH_LIST_TIME_REC_ALM
+  save_res_dic_in_file(path_name_save_dic, dic_list_time_rec_alm)
+
+def modeling_receiv_alm_one_point(time: int, tup_alm: tuple
+                                 ,tup_coor_point: tuple, dic_ci: dict
+                                 ,vec_f_receiv_alm: array, dic_time_rec_alm: dict
+                                 ,dic_list_time_rec_alm: dict):
+  """
+  Функция моделирования принятия альманаха в одной точке на один момент времени
+
+  Вх. аргументы:
+    # time - текущее время
+    # tup_alm - кортеж, который хранит альманах
+    # tup_coor_point - котреж с текущими координатами в град
+    # dic_ci - словарь, который содержит ЦИ для всех КА и сигналов
+    # vec_f_receiv_alm - вектор, который будет содержать флаги принятия
+                         альманаха для соот. КА для соот. точки на карте
+    # dic_time_rec_alm - словарь, который будет содержать время приема текущего
+                         альманаха для каждой точки
+    # dic_list_time_rec_alm - словарь, который будет содержать список времен
+                              приема полного альманаха
+  """
+  coor_point = blh2xyz((tup_coor_point[0]*math.pi/180, tup_coor_point[1]*math.pi/180, gc.HEIGHT_POS))
+  # Определяем видимые КА
+  list_vis_sat = definition_visible_sat(time, tup_alm, coor_point)
+  # Заполняем вектор с переданными строками альманаха
+  passing_str(time, list_vis_sat, dic_ci, vec_f_receiv_alm)
+  # Определяем приняли ли в данной точке полный альманах
+  f_full_alm = not(False in vec_f_receiv_alm)
+  # Если альманах принят полностью, то добавляем полученное время в соот. список
+  # из словаря, а также обнуляем это время и устанавливаем в False флаги
+  # принятия альманха
+  if (f_full_alm):
+    dic_list_time_rec_alm[tup_coor_point].append(dic_time_rec_alm[tup_coor_point])
+    dic_time_rec_alm[tup_coor_point] = 0
+    vec_f_receiv_alm[:] = False
+  else: # Инкрементируем время приема полного альманаха
+    dic_time_rec_alm[tup_coor_point] += 1
+  
+def definition_visible_sat(time: int, tup_alm: tuple
+                          ,coor_point: tuple):
+  """
+  Функция определения видимых КА в определенной точке.
+
+  Вх. аргументы:
+    # time - текущее время
+    # tup_alm - кортеж, который хранит альманах
+    # tup_coor_point - котреж с текущими координатами в рад
+  
+  Вых. аргументы:
+    # vis_sat - список в видимыми КА
+  """
+  # Список, который будет содежрать номера КА, который видны в данной точке
+  vis_sat = []
+  # Цикл перебора КА для определения их видимости
+  for ind_sat in range(tup_alm[2]):
+    num_sat = ind_sat+1
+    # Рассчитываем координаты
+    coor_sat, speed_sat = calcultion_coor_alm_glo(time+tup_alm[0], tup_alm[1]+1
+                                                 ,tup_alm[1], tup_alm[4][ind_sat]
+                                                 ,tup_alm[10][ind_sat]
+                                                 ,tup_alm[11][ind_sat]
+                                                 ,tup_alm[6][ind_sat]
+                                                 ,tup_alm[8][ind_sat]
+                                                 ,tup_alm[9][ind_sat]
+                                                 ,tup_alm[7][ind_sat])
+    # Рассчитываем УМ между КА и тек. позицией
+    um = calculation_um(coor_sat, coor_point)
+    # Если КА видим, то добавлем его в список
+    if (um > gc.MIN_UM):
+      vis_sat.append(num_sat)
+  return vis_sat
+
+def passing_str(time, list_vis_sat, dic_ci, vec_f_receiv_alm):
+  """
+  Функция, которая заполняет вектор с принятыми альманахами КА для опред. точки
+
+  Вх. аргументы:
+    # time - текущее время
+    # list_vis_sat - список с видимыми КА
+    # dic_ci - словарь с ЦИ для всех КА и сигналов
+    # vec_f_receiv_alm - вектор, который содержит флаги принятия альманахи
+                         для соот. точки
+  """
+  for num_sat in list_vis_sat:
+    passing_str_from_sat(time, dic_ci[str(num_sat)], vec_f_receiv_alm)
+    
+def passing_str_from_sat(time, dic_ci_sat, vec_f_receiv_alm):
+  """
+  Функция, которая заполняет вектор с принятыми альманахами КА для опред. точки
+  от одного КА
+
+  Вх. аргументы:
+    # time - текущее время
+    # dic_ci_sat - ЦИ для выбранного КА
+    # vec_f_receiv_alm - вектор, который содержит флаги принятия альманахи
+                         для соот. точки
+  """
+  # Цикл по сигналам
+  for name_sig in gc.ALL_SIGNALS:
+    time_tran_sig = gc.DIC_NAME_SIG_IN_TRANS_TIME[name_sig]
+    # Заполняем флаг, если строка передалась
+    if((time%time_tran_sig) == 0) and (dic_ci_sat[name_sig][time%gc.MAX_TIME_DI] >= gc.NUM_CON_ALM):
+      ind_sat = dic_ci_sat[name_sig][time%gc.MAX_TIME_DI]-gc.NUM_CON_ALM
+      vec_f_receiv_alm[ind_sat] = True
+
+def save_res_dic_in_file(path_file: str, dic_obj: dict):
+  """
+  Функция сохранения в файл в файл типа json.
+
+  Вх. аргументы:
+    # dic_obj - ЦИ, которую необходимо записать
+  """
+  # Проверяем наличие каталога, если нет, создаем его
+  time = datetime.datetime
+  path_file += time.today().strftime('%Y_%m_%d_%H_%M_%S')+"/"
+  my_mkdir(path_file)
+  path_file += "list_rec_alm/"
+  my_mkdir(path_file)
+  # Цикл для перебора всех точек
+  for cur_point in dic_obj.keys():
+    # Распоковываем кортеж, т. к. json.dump не умеет записывать в файлы
+    # списка, у которых в качестве ключа кортеж
+    lat, lon = cur_point
+    # Создаем каталог, который будет содержать все точки на данной широте
+    path_result_file = path_file+f"{lat}/"
+    my_mkdir(path_result_file)
+    path_result_file += f"{lon}.json"
+    data = dic_obj[cur_point]
+    with open(path_result_file, "w", encoding="utf-8") as file:
+      dump(data, file, indent=2) 
+
+def my_mkdir(path_dir):
+  """
+  Функция создания каталога с проверкой на его отсутствие
+
+  Вх. аргументы:
+    # path_dir - путь до каталога
+  """
+  obj_path = Path(path_dir)
+  f_dir = obj_path.is_dir()
+  if (not f_dir):
+      obj_path.mkdir()
