@@ -382,11 +382,13 @@ def modeling_receiv_alm():
   dic_f_receiv_alm = formation_dict_f_receiv_alm(tup_alm[2])
   # Основной цикл по времени
   for time in range(gc.TIME_MODELING):
+    # Вычисляем координаты всех КА
+    all_coor_sat = calculation_coordinates_sat(time, tup_alm)
     # Цикл по широте
     for lat in range(gc.START_LATITUDE, gc.END_LATITUDE, gc.STEP_LATITUDE):
       # Цикл по долготе
       for lon in range(gc.START_LONGITUDE, gc.END_LONGITUDE, gc.STEP_LONGITUDE):
-        modeling_receiv_alm_one_point(time, tup_alm
+        modeling_receiv_alm_one_point(time, all_coor_sat
                                      ,(lat, lon), dic_ci
                                      ,dic_f_receiv_alm[(lat, lon)]
                                      ,dic_time_rec_alm, dic_list_time_rec_alm)
@@ -394,7 +396,35 @@ def modeling_receiv_alm():
   path_name_save_dic = gc.PATH_LIST_TIME_REC_ALM
   save_res_dic_in_file(path_name_save_dic, dic_list_time_rec_alm)
 
-def modeling_receiv_alm_one_point(time: int, tup_alm: tuple
+def calculation_coordinates_sat(time: int, tup_alm: tuple):
+  """
+  Функция вычисления координат всех КА на заданный промежуток времени
+  
+  Вх. аргументы:
+    # time - текущее время
+    # tup_alm - кортеж, который хранит альманах
+  
+  Вых. аргументы:
+    # all_coor_sat - список, который хранит кортежи с координатами КА
+  """
+  # Список, который будет содежрать номера КА, который видны в данной точке
+  all_coor_sat = []
+  # Цикл перебора КА для определения их видимости
+  for ind_sat in range(tup_alm[2]):
+    # Рассчитываем координаты
+    coor_sat, _ = calcultion_coor_alm_glo(time+tup_alm[0], tup_alm[1]+1
+                                         ,tup_alm[1], tup_alm[4][ind_sat]
+                                         ,tup_alm[10][ind_sat]
+                                         ,tup_alm[11][ind_sat]
+                                         ,tup_alm[6][ind_sat]
+                                         ,tup_alm[8][ind_sat]
+                                         ,tup_alm[9][ind_sat]
+                                         ,tup_alm[7][ind_sat])
+
+    all_coor_sat.append(tuple(coor_sat))
+  return all_coor_sat
+
+def modeling_receiv_alm_one_point(time: int, all_coor_sat: list
                                  ,tup_coor_point: tuple, dic_ci: dict
                                  ,vec_f_receiv_alm: array, dic_time_rec_alm: dict
                                  ,dic_list_time_rec_alm: dict):
@@ -403,7 +433,7 @@ def modeling_receiv_alm_one_point(time: int, tup_alm: tuple
 
   Вх. аргументы:
     # time - текущее время
-    # tup_alm - кортеж, который хранит альманах
+    # all_coor_sat - список, который хранит кортежи с координатами каждого КА
     # tup_coor_point - котреж с текущими координатами в град
     # dic_ci - словарь, который содержит ЦИ для всех КА и сигналов
     # vec_f_receiv_alm - вектор, который будет содержать флаги принятия
@@ -415,7 +445,7 @@ def modeling_receiv_alm_one_point(time: int, tup_alm: tuple
   """
   coor_point = blh2xyz((tup_coor_point[0]*math.pi/180, tup_coor_point[1]*math.pi/180, gc.HEIGHT_POS))
   # Определяем видимые КА
-  list_vis_sat = definition_visible_sat(time, tup_alm, coor_point)
+  list_vis_sat = definition_visible_sat(all_coor_sat, coor_point)
   # Заполняем вектор с переданными строками альманаха
   passing_str(time, list_vis_sat, dic_ci, vec_f_receiv_alm)
   # Определяем приняли ли в данной точке полный альманах
@@ -430,14 +460,12 @@ def modeling_receiv_alm_one_point(time: int, tup_alm: tuple
   else: # Инкрементируем время приема полного альманаха
     dic_time_rec_alm[tup_coor_point] += 1
   
-def definition_visible_sat(time: int, tup_alm: tuple
-                          ,coor_point: tuple):
+def definition_visible_sat(all_coor_sat: list, coor_point: tuple):
   """
   Функция определения видимых КА в определенной точке.
 
   Вх. аргументы:
-    # time - текущее время
-    # tup_alm - кортеж, который хранит альманах
+    # all_coor_sat - список, который хранит кортежи с координатами каждого КА
     # tup_coor_point - котреж с текущими координатами в рад
   
   Вых. аргументы:
@@ -446,17 +474,10 @@ def definition_visible_sat(time: int, tup_alm: tuple
   # Список, который будет содежрать номера КА, который видны в данной точке
   vis_sat = []
   # Цикл перебора КА для определения их видимости
-  for ind_sat in range(tup_alm[2]):
+  for ind_sat in range(len(all_coor_sat)):
     num_sat = ind_sat+1
-    # Рассчитываем координаты
-    coor_sat, speed_sat = calcultion_coor_alm_glo(time+tup_alm[0], tup_alm[1]+1
-                                                 ,tup_alm[1], tup_alm[4][ind_sat]
-                                                 ,tup_alm[10][ind_sat]
-                                                 ,tup_alm[11][ind_sat]
-                                                 ,tup_alm[6][ind_sat]
-                                                 ,tup_alm[8][ind_sat]
-                                                 ,tup_alm[9][ind_sat]
-                                                 ,tup_alm[7][ind_sat])
+    # Выделяем координаты КА
+    coor_sat = all_coor_sat[ind_sat]
     # Рассчитываем УМ между КА и тек. позицией
     um = calculation_um(coor_sat, coor_point)
     # Если КА видим, то добавлем его в список
