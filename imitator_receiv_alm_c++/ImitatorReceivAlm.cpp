@@ -1,0 +1,314 @@
+#include <fstream>
+
+#include "ImitatorReceivAlm.hpp"
+#include "json.hpp"
+
+using json = nlohmann::json;
+
+/* Конструкторы */
+ImitatorReceivAlm::ImitatorReceivAlm()
+{
+  // Все пути по умолчанию указываем, что находятся по пути STD_PATH_DATA_IMITATOR
+  this->path_alm_file = std::string(STD_PATH_DATA_IMITATOR)+std::string(STD_NAME_ALM_FILE);
+  this->path_di_file  = std::string(STD_PATH_DATA_IMITATOR)+std::string(STD_NAME_DI_FILE);
+}
+
+/* Реализация public методов */
+
+int ImitatorReceivAlm::StartImitator()
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+
+  // Считываем ЦИ с файла
+  char* p_text_from_file;
+  output_err = ReadDIFromFile(this->path_di_file, p_text_from_file);
+  // Конвертиурем Текст в объект типо map
+  output_err = Text2MapWithJSONObj(p_text_from_file, this->di_system);
+  // Отчищаем память, выделенную под текст
+  delete p_text_from_file;
+  // Дата измерения альманаха
+  Date date_rec_alm;
+  // Считываем альманах системы c файла
+  output_err = ReadDataAlmFromFile(this->path_alm_file, this->vec_alm, date_rec_alm);
+  // Рассчитываем кол-во секунд
+  double second_rec_alm = ConvertDateOfSeconds1996(date_rec_alm);
+  return output_err;
+}
+
+/* Реализация private методов */
+
+int ImitatorReceivAlm::ReadDataAlmFromFile(std::string path_alm_file, std::vector<Almanah>& vec_alm, Date& date_rec_alm)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  // Предварительно отчищаем вектор с альманахом системы
+  vec_alm.clear();
+  // Считываем данные с файла
+  std::ifstream file(path_alm_file);
+  if (file.is_open())
+  {
+    // Считанные параметры
+    uint16_t day = UNDEFINE_UINT8;
+    uint16_t mon = UNDEFINE_UINT8;
+    uint16_t count_sat = UNDEFINE_UINT8;
+    uint16_t year = UNDEFINE_UINT16;
+    uint16_t na = UNDEFINE_UINT16;
+    double temp = NAN;
+    // Считываем первую строку с файла (В каждой строке файла COUNT_VAR_TO_STR_IN_FILE_ALM)
+    for (uint8_t ind_r = 0; ind_r < COUNT_VAR_TO_STR_IN_FILE_ALM; ind_r++)
+    {
+      switch(ind_r)
+      {
+      case IND_DAY_REC_FILE_ALM:
+        file >> day;
+        break;
+      case IND_MON_REC_FILE_ALM:
+        file >> mon;
+        break;
+       case IND_YEAR_REC_FILE_ALM:
+        file >> year;
+        break;
+      case IND_NA_FILE_ALM:
+        file >> na;
+        break;
+      case IND_COUNT_SAT_FILE_ALM:
+        file >> count_sat;
+        break;
+       default:
+        file >> temp;
+        break;
+      }
+    }
+    // Заполняем структуру с датой
+    date_rec_alm[0] = day;
+    date_rec_alm[1] = mon;
+    date_rec_alm[2] = year;
+    // Рассчитываем число четырехлетних циклов от 1996 г.
+    uint8_t n4 = static_cast<uint8_t>((year-1996)/4);
+    // Цикл по КА
+    for (uint8_t num_sat = 1; num_sat <= count_sat; num_sat++)
+    {
+      Almanah alm;
+      alm.num = num_sat;
+      alm.n4  = n4;
+      alm.na  = na;
+      int16_t temp_lit;
+      file >> temp_lit;
+      alm.lit = static_cast<int8_t>(temp_lit);
+      file >> alm.lambdaT;
+      file >> alm.tau;
+      file >> alm.lambda;
+      file >> alm.dI;
+      file >> alm.omega;
+      file >> alm.e;
+      file >> alm.dT;
+      file >> alm.ddT;
+      vec_alm.push_back(alm);
+    }
+  }
+  else
+    output_err = ERROR_MISS_ALM_FILE;
+  return output_err;
+}
+
+int ImitatorReceivAlm::ReadDIFromFile(std::string path_di_file, char*& text_in_file)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  // Открываем файл для чтения
+  std::ifstream file(path_di_file, std::ifstream::binary);
+  if (file.is_open())
+  {
+    // Определяем размер (кол-во символов в файле) файла
+    file.seekg (0, file.end);
+    int size_file = file.tellg();
+    file.seekg (0, file.beg);
+
+    // Выделяем необходимое кол-во памяти
+    text_in_file = new char[size_file];
+
+    // Считываем текст с файла и закрываем его
+    file.read (text_in_file, size_file);
+    file.close();
+  }
+  else
+  {
+    output_err = ERROR_MISS_DI_FILE;
+  }
+  return output_err;
+}
+
+int ImitatorReceivAlm::Text2MapWithJSONObj(char* text, map_for_di& di)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  try
+  {
+    // Парсим текст и конвертируем его в json объект
+    json j_complete = json::parse(text);
+    di = j_complete;
+  }
+  catch (json::parse_error& exp)
+  {
+    output_err = ERROR_CONVERT_TEXT_TO_JSON;
+  }
+  catch (json::type_error& exp)
+  {
+    output_err = ERROR_CONVERT_JSON_TO_MAP;
+  }
+  return output_err;
+}
+
+double ImitatorReceivAlm::ConvertDateOfSeconds1996(Date date_rec_alm)
+{
+  double seconds = 0;
+  // Переводим год в месяца
+  seconds = (date_rec_alm[2] - 1996)*12;
+  // Прибавляем текущий месяц
+  seconds += date_rec_alm[1];
+  // Переводим месяца в дни. Кол-во дней в месяце в среднем 29.3
+  seconds *= 29.3;
+  // Прибовляем тек. значение дня
+  seconds += date_rec_alm[0];
+  // Переводим кол-во дней в секунды
+  seconds *= 86400;
+  return seconds;
+}
+
+int ImitatorReceivAlm::CalculationCoordinatesAllSat(uint32_t curr_time, const std::vector<Almanah>& vec_alm
+                                                   ,std::vector<Coordinates>& vec_sat_coor)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  // Предварительно отчищаем вектор с координатами КА
+  vec_sat_coor.clear();
+  // Цикл перебора альманаха
+  for (const auto& almanah : vec_alm)
+  {
+    Coordinates coor_sat; // Рассчитанные координаты КА
+    // Рассчитываем координаты КА
+    output_err = CalcultionCoordinatesSat(curr_time, almanah, coor_sat);
+    if (output_err != SUCCESSFUL_COMPLETION)
+      break;
+    vec_sat_coor.push_back(coor_sat);
+  }
+  return output_err;
+}
+
+int ImitatorReceivAlm::CalcultionCoordinatesSat(uint32_t curr_time, const Almanah& almanah, Coordinates& sat_coor)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  double tmAlmVto = ((almanah.n4 - 1) - 1); // число четырехлетних циклов от 2000г
+  tmAlmVto *= 1461;                         // число дней от начала 2000г до конца предыдущего четырех.цикла
+  tmAlmVto += (almanah.na - 1);             // число дней от начала 2000г до дня na
+  tmAlmVto *= 86400;                        // число секунд от начала 2000г до дня na
+  if( fabs((static_cast<double>(curr_time)) - tmAlmVto) > (90*24*3600) )
+  {
+    output_err = ERROR_OLD_ALM;
+  }
+  else
+  {
+    // Константы
+    const double i_cr = 64.8;
+    const double T_cr = 43200.0;
+    const double GM   = 398600.4418;
+    const double a_e  = 6378.136;
+    const double om_z = 7.2921150e-5;
+    const double J0_2 = 1082.62575e-6;
+
+    //Исходные данные приведены в радианах. В алгоритме ИКД приведено в циклах.
+    double dI = almanah.dI / M_PI;
+    double lambda = almanah.lambda / M_PI;
+    double omega = almanah.omega / M_PI;
+
+    //1.
+    double dt_pr = curr_time - (tmAlmVto+almanah.lambdaT);
+    //2.
+    double W = floor(dt_pr / (T_cr+almanah.dT));
+    //3.
+    double i = (i_cr/180.0+dI)*M_PI;
+    //4.
+    double T_dr = T_cr + almanah.dT + (2.0*W+1)*almanah.ddT;
+    double n = 2.0*M_PI/T_dr;
+    //5.
+    double a = 0.0;
+    double p;
+    if (PROG_LVL_OPT != 2)
+    {
+      double a0 = 1.0;
+      double T_osk = T_dr;
+      while (fabs(a-a0)>1e-6)
+      { //в ИКД указано 1 см, но согласно примеру необходимо выполнить еще одну итерацию. Скорее всего в ИКД использовался do while
+        a0 = a;
+        a = pow(pow(T_osk/(2.0*M_PI),2.0) * GM,1.0/3.0);
+        p = a * (1.0-pow(almanah.e,2.0));
+        T_osk = T_dr / (1-1.5*J0_2*pow(a_e/p,2.0) *( (2.0-2.5*pow(sin(i),2.0)) * pow((1.0-pow(almanah.e,2.0)),1.5) / pow(1.0+almanah.e*cos(omega*M_PI),2.0) + pow(1.0+almanah.e*cos(omega*M_PI),3.0) / (1.0-pow(almanah.e,2.0))));
+       }
+    }
+    else
+    {
+      a = pow(pow(T_dr/(2.0*M_PI),2.0) * GM,1.0/3.0);
+      p = a * (1.0-pow(almanah.e,2.0));
+    }
+    //6.
+    double lym = lambda * M_PI - (om_z + 1.5*J0_2*n*pow(a_e/p,2.0)*cos(i))*dt_pr;
+    double om = omega*M_PI-0.75*J0_2*n*pow(a_e/p,2.0)* (1-5*pow(cos(i),2.0))*dt_pr;
+    //7.
+    double E0 = -2.0 * atan(sqrt((1.0-almanah.e)/(1.0+almanah.e))*tan(om/2.0));
+    double L1 = om + E0 - almanah.e*sin(E0);
+    //8.
+    double L[2];
+    L[1] = L1 + n*(dt_pr - (T_cr+almanah.dT)*W-almanah.ddT*W*W);
+    L[0] = L1;
+
+    double a_ = a;
+    double i_ = i;
+    double lym_ = lym;
+    double L_ = L[1];
+    double eps_ = almanah.e;
+    double om_ = om;
+
+    if (PROG_LVL_OPT == 0)
+    {
+      //9.
+      double h = almanah.e * sin(om);
+      double l = almanah.e * cos(om);
+      double B = 1.5*J0_2*(a_e/a)*(a_e/a);
+      double dela[2], delh[2],dell[2],dellym[2],deli[2],delL[2];
+      for (int k=0;k<2;k++)
+      {
+        dela[k] = (2.0*B*(1-1.5*pow(sin(i),2.0))*(l*cos(L[k])+h*sin(L[k]))+B*pow(sin(i),2.0)*(0.5*h*sin(L[k])-0.5*l*cos(L[k])+cos(2.0*L[k])+3.5*l*cos(3.0*L[k])+3.5*h*sin(3.0*L[k])))*a;
+        delh[k] = B*(1-1.5*pow(sin(i),2.0))*(sin(L[k])+1.5*l*sin(2*L[k])-1.5*h*cos(2.0*L[k]))-0.25*B*pow(sin(i),2.0)*(sin(L[k])-7.0/3.0*sin(3.0*L[k])+5*l*sin(2*L[k])-8.5*l*sin(4*L[k])+8.5*h*cos(4*L[k])+h*cos(2.0*L[k])) +(-0.5*B*pow(cos(i),2.0)*l*sin(2.0*L[k]));
+        dell[k] = B*(1-1.5*pow(sin(i),2.0))*(cos(L[k])+1.5*l*cos(2*L[k])+1.5*h*sin(2*L[k]))-0.25*B*pow(sin(i),2.0)*(-cos(L[k])-7.0/3.0*cos(3.0*L[k])-5.0*h*sin(2*L[k])-8.5*l*cos(4*L[k])-8.5*h*sin(4*L[k])+l*cos(2.0*L[k]))+  0.5*B*pow(cos(i),2.0)*h*sin(2.0*L[k]);
+        dellym[k] = -B*cos(i)*(3.5*l*sin(L[k])-2.5*h*cos(L[k])-0.5*sin(2*L[k])-7.0/6.0*l*sin(3.0*L[k])+7.0/6.0*h*cos(3*L[k]));
+        deli[k] = 0.5*B * sin(i)*cos(i)*(-l*cos(L[k])+h*sin(L[k])+cos(2*L[k])+7.0/3.0*l*cos(3.0*L[k])+7.0/3.0*h*sin(3*L[k]));
+        delL[k] = 2.0*B*(1-1.5*pow(sin(i),2.0))*(7.0/4.0*l*sin(L[k])-7.0/4.0*h*cos(L[k]))+3.0*B*pow(sin(i),2.0)*(-7.0/24.0*h*cos(L[k])-7.0/24.0*l*sin(L[k])-49.0/72.0*h*cos(3*L[k])+49.0/72.0*l*sin(3.0*L[k])+0.25*sin(2*L[k]))+B*pow(cos(i),2.0) * (3.5*l*sin(L[k])-2.5*h*cos(L[k])-0.5*sin(2.0*L[k])+7.0/6.0*l*sin(3.0*L[k])+7.0/6.0*h*cos(3.0*L[k]));
+      }
+
+      a_ = a + dela[1] - dela[0];
+      double h_ = h + delh[1] - delh[0];
+      double l_ = l + dell[1] - dell[0];
+      i_ = i + deli[1] - deli[0];
+      lym_ = lym +dellym[1] - dellym[0];
+      L_ = L[1] + delL[1] - delL[0];
+      eps_ = sqrt(h_*h_+l_*l_);
+      om_ = atan2(h_,l_);
+    }
+
+    //10.
+    E0=L_-om_;
+    double E = 0;
+    while (fabs(E-E0)>10e-11){ //в Си использовать do while, тогда вставить условие abs(E-E0)>10e-9
+      E0 = E;
+      E = L_-om_+eps_*sin(E0);
+    }
+    //11.
+    double v = 2.0 * atan(sqrt((1.0+eps_)/(1.0-eps_))*tan(E/2.0));
+    double u = v + om_;
+    //12.
+    p = a_*(1.0-eps_*eps_);
+    double r = p/(1+eps_*cos(v));
+    // Кординаты сразу в м.
+    sat_coor[0] = r * (cos(lym_)*cos(u)-sin(lym_)*sin(u)*cos(i_)) *1000;
+    sat_coor[1] = r * (sin(lym_)*cos(u)+cos(lym_)*sin(u)*cos(i_)) *1000;
+    sat_coor[2] = r * sin(u)*sin(i_)*1000;
+  }
+
+  return output_err;
+}
