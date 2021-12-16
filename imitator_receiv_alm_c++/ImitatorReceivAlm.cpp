@@ -1,7 +1,9 @@
+
 #include <fstream>
 
 #include "ImitatorReceivAlm.hpp"
 #include "json.hpp"
+#include "Functions.hpp"
 
 using json = nlohmann::json;
 
@@ -11,6 +13,15 @@ ImitatorReceivAlm::ImitatorReceivAlm()
   // Все пути по умолчанию указываем, что находятся по пути STD_PATH_DATA_IMITATOR
   this->path_alm_file = std::string(STD_PATH_DATA_IMITATOR)+std::string(STD_NAME_ALM_FILE);
   this->path_di_file  = std::string(STD_PATH_DATA_IMITATOR)+std::string(STD_NAME_DI_FILE);
+  // Указываем параметры по умолчанию
+  this->time_simulation = STD_TIME_SIMULATION;
+  this->start_latitude = STD_START_LATITUDE;
+  this->end_latitude   = STD_END_LATITUDE;
+  this->step_latitude  = STD_STEP_LATITUDE;
+  this->start_longitude = STD_START_LONGITUDE;
+  this->end_longitude   = STD_END_LONGITUDE;
+  this->step_longitude  = STD_STEP_LONGITUDE;
+  this->min_angle_elev = STD_MIN_ANGLE_ELEV;
 }
 
 /* Реализация public методов */
@@ -20,18 +31,92 @@ int ImitatorReceivAlm::StartImitator()
   int output_err = SUCCESSFUL_COMPLETION;
 
   // Считываем ЦИ с файла
-  char* p_text_from_file;
+  char* p_text_from_file = nullptr;
   output_err = ReadDIFromFile(this->path_di_file, p_text_from_file);
   // Конвертиурем Текст в объект типо map
   output_err = Text2MapWithJSONObj(p_text_from_file, this->di_system);
   // Отчищаем память, выделенную под текст
-  delete p_text_from_file;
+  delete [] p_text_from_file;
   // Дата измерения альманаха
   Date date_rec_alm;
   // Считываем альманах системы c файла
   output_err = ReadDataAlmFromFile(this->path_alm_file, this->vec_alm, date_rec_alm);
-  // Рассчитываем кол-во секунд
-  double second_rec_alm = ConvertDateOfSeconds1996(date_rec_alm);
+  // Рассчитываем кол-во секунд от 1996 года для расчета определения координат КА
+  double second_rec_alm = ConvertDateOfSeconds2000(date_rec_alm);
+  this->time_start_calculation_coor = static_cast<uint32_t>(second_rec_alm);
+  // Формируем необходимые словаря для моделировния
+  FormationAllDic();
+  // Моделируем принятие альманаха
+  ModelingReceivAlm();
+
+  return output_err;
+}
+
+/* Сеттеры */
+
+int ImitatorReceivAlm::SetPathAlmFile(std::string path_alm)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  // Проверяем на наличие файла
+  bool file_exist = CheckFileExist(path_alm);
+  if (!file_exist)
+    output_err = ERROR_MISS_ALM_FILE;
+  else
+    this->path_alm_file = path_alm;
+  return output_err;
+}
+
+int ImitatorReceivAlm::SetPathDIFile(std::string path_di)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  // Проверяем на наличие файла
+  bool file_exist = CheckFileExist(path_di);
+  if (!file_exist)
+    output_err = ERROR_MISS_ALM_FILE;
+  else
+    this->path_di_file = path_di;
+  return output_err;
+}
+
+int ImitatorReceivAlm::SetMapCoordinatesLatitude(int8_t start, int8_t end, uint8_t step)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  if (end < start)
+    output_err = ERROR_SET_NOT_CORRERCT_LATITUDE;
+  else if (step == 0)
+    output_err = ERROR_NULL_STEP;
+  else
+  {
+    this->start_latitude = start;
+    this->end_latitude   = end;
+    this->step_latitude  = step;
+  }
+  return output_err;
+}
+
+int ImitatorReceivAlm::SetMapCoordinatesLongitude(int16_t start, int16_t end, uint8_t step)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  if (end < start)
+    output_err = ERROR_SET_NOT_CORRERCT_LONGITUDE;
+  else if (step == 0)
+    output_err = ERROR_NULL_STEP;
+  else
+  {
+    this->start_longitude = start;
+    this->end_longitude   = end;
+    this->step_longitude  = step;
+  }
+  return output_err;
+}
+
+int ImitatorReceivAlm::SetMinAngleElev(double angle_elev)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  if ((angle_elev < MIN_CORRECT_ANGLE_ELEV) || (angle_elev > MAX_COORECT_ANGLE_ELEV))
+    output_err = ERROR_SET_NOT_CORRECT_ANGLE_ELEV;
+  else
+    this->min_angle_elev = angle_elev;
   return output_err;
 }
 
@@ -156,20 +241,105 @@ int ImitatorReceivAlm::Text2MapWithJSONObj(char* text, map_for_di& di)
   return output_err;
 }
 
-double ImitatorReceivAlm::ConvertDateOfSeconds1996(Date date_rec_alm)
+double ImitatorReceivAlm::ConvertDateOfSeconds2000(Date date_rec_alm)
 {
   double seconds = 0;
   // Переводим год в месяца
-  seconds = (date_rec_alm[2] - 1996)*12;
+  seconds = (date_rec_alm[2] - 2000)*12;
   // Прибавляем текущий месяц
   seconds += date_rec_alm[1];
-  // Переводим месяца в дни. Кол-во дней в месяце в среднем 29.3
-  seconds *= 29.3;
+  // Переводим месяца в дни. Кол-во дней в месяце в среднем 30
+  seconds *= 30;
   // Прибовляем тек. значение дня
   seconds += date_rec_alm[0];
   // Переводим кол-во дней в секунды
   seconds *= 86400;
   return seconds;
+}
+
+void ImitatorReceivAlm::FormationAllDic()
+{
+  for (int8_t latitude = this->start_latitude; latitude <= this->end_latitude; latitude += this->step_latitude)
+  {
+    for (int16_t longitude = this->start_longitude; longitude <= this->end_longitude; longitude += this->step_longitude)
+    {
+      bl_coor_point cur_point(latitude, longitude);
+      FormationDicTimeRecAlm(cur_point);
+      FormationDicListRecAlm(cur_point);
+      FormationDicFlagRecAlm(cur_point);
+    }
+  }
+}
+
+void ImitatorReceivAlm::FormationDicTimeRecAlm(bl_coor_point cur_point)
+{
+  this->dic_time_rec_alm[cur_point] = 0;
+}
+
+void ImitatorReceivAlm::FormationDicListRecAlm(bl_coor_point cur_point)
+{
+  this->dic_list_time_rec_alm[cur_point] = std::list<int>();
+}
+
+void ImitatorReceivAlm::FormationDicFlagRecAlm(bl_coor_point cur_point)
+{
+  this->dic_flag_rec_alm[cur_point] = std::vector<bool>(this->vec_alm.size());
+}
+
+int ImitatorReceivAlm::ModelingReceivAlm()
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  // Вектор, который содержит координаты всех КА
+  std::vector<Coordinates> vec_coor_all_sat;
+  // Основной цикл по времени
+  for (uint32_t time = 1; time <= this->time_simulation; time++)
+  {
+    // Рассчитываем координаты всех КА
+    CalculationCoordinatesAllSat(time+this->time_start_calculation_coor, this->vec_alm, vec_coor_all_sat);
+    // Цикл по широте
+    for (int8_t latitude = this->start_latitude; latitude <= this->end_latitude; latitude += this->step_latitude)
+    {
+      for (int16_t longitude = this->start_longitude; longitude <= this->end_longitude; longitude += this->step_longitude)
+      {
+        bl_coor_point cur_point(latitude, longitude);
+        output_err = ModelingReceivAlmOnePoint(time, vec_coor_all_sat, cur_point);
+      }
+      if (output_err != SUCCESSFUL_COMPLETION)
+        break;
+    }
+  }
+  return output_err;
+}
+
+int ImitatorReceivAlm::ModelingReceivAlmOnePoint(uint32_t time, std::vector<Coordinates> &vec_coor_all_sat
+                                                ,bl_coor_point coor_bl_point)
+{
+  int output_err = SUCCESSFUL_COMPLETION;
+  // Определяем текущие координаты принимающей антенны
+  Coordinates coor_point;
+  coor_point[0] = coor_bl_point.first*M_PI/180.0;
+  coor_point[1] = coor_bl_point.second*M_PI/180.0;
+  coor_point[2] = HEIGHT_POS;
+  coor_point = BLH2XYZ(coor_point);
+  // Вычисляем список с видимыми КА
+  std::list<uint8_t> list_vis_sat = DefinitionVisibleSat(vec_coor_all_sat, coor_point);
+  // Заполняем вектор с принятыми альманахами КА для опред. точки
+  PassingStr(time, list_vis_sat, coor_bl_point);
+  // Определяем был ли передан весь альманах для данной точки
+  auto& vec_rec_alm = this->dic_flag_rec_alm[coor_bl_point];
+  bool f_full_alm = (std::find(vec_rec_alm.begin(), vec_rec_alm.end(), false) == vec_rec_alm.end());
+  // Если альманах принят полностью, то добавляем полученное время в соот. список
+  // из словаря, а также обнуляем это время и устанавливаем в False флаги принятия альманха
+  if (f_full_alm)
+  {
+    this->dic_list_time_rec_alm[coor_bl_point].push_back(this->dic_time_rec_alm[coor_bl_point]);
+    this->dic_time_rec_alm[coor_bl_point] = 0;
+    std::fill(vec_rec_alm.begin(), vec_rec_alm.end(), false);
+  }
+  else
+    this->dic_time_rec_alm[coor_bl_point] += 1;
+
+  return output_err;
 }
 
 int ImitatorReceivAlm::CalculationCoordinatesAllSat(uint32_t curr_time, const std::vector<Almanah>& vec_alm
@@ -194,10 +364,10 @@ int ImitatorReceivAlm::CalculationCoordinatesAllSat(uint32_t curr_time, const st
 int ImitatorReceivAlm::CalcultionCoordinatesSat(uint32_t curr_time, const Almanah& almanah, Coordinates& sat_coor)
 {
   int output_err = SUCCESSFUL_COMPLETION;
-  double tmAlmVto = ((almanah.n4 - 1) - 1); // число четырехлетних циклов от 2000г
-  tmAlmVto *= 1461;                         // число дней от начала 2000г до конца предыдущего четырех.цикла
-  tmAlmVto += (almanah.na - 1);             // число дней от начала 2000г до дня na
-  tmAlmVto *= 86400;                        // число секунд от начала 2000г до дня na
+  double tmAlmVto = (almanah.n4 - 1); // число четырехлетних циклов от 2000г
+  tmAlmVto *= 1461;                   // число дней от начала 2000г до конца предыдущего четырех.цикла
+  tmAlmVto += (almanah.na - 1);       // число дней от начала 2000г до дня na
+  tmAlmVto *= 86400;                  // число секунд от начала 2000г до дня na
   if( fabs((static_cast<double>(curr_time)) - tmAlmVto) > (90*24*3600) )
   {
     output_err = ERROR_OLD_ALM;
@@ -311,4 +481,43 @@ int ImitatorReceivAlm::CalcultionCoordinatesSat(uint32_t curr_time, const Almana
   }
 
   return output_err;
+}
+
+std::list<uint8_t> ImitatorReceivAlm::DefinitionVisibleSat(std::vector<Coordinates>& vec_sat_coor, Coordinates coor_point)
+{
+  std::list<uint8_t> list_vis_sat;
+  // Цикл перебора координат КА
+  for (uint8_t ind_sat = 0; ind_sat < vec_sat_coor.size(); ind_sat++)
+  {
+    uint8_t num_sat = ind_sat+1;
+    // Рассчитываем УМ
+    double angle_elev = CalculationAngleElevation(vec_sat_coor[ind_sat], coor_point);
+    // Определяем видимость КА
+    if (angle_elev > this->min_angle_elev)
+      list_vis_sat.push_back(num_sat);
+  }
+  return list_vis_sat;
+}
+
+void ImitatorReceivAlm::PassingStr(uint32_t time, std::list<uint8_t>& list_vis_sat, bl_coor_point cur_point)
+{
+  // Цикл по видимым КА
+  for (uint8_t num_sat : list_vis_sat)
+  {
+    auto signals_di_sat = this->di_system[std::to_string(num_sat)];
+    // Цикл по передаваемым сигналам
+    for (auto signal_di : signals_di_sat)
+    {
+      std::string cur_signal = signal_di.first;
+      int num_cur_str = signal_di.second[(time-1)%MAX_TIME_DI];
+      uint8_t time_trans_sig = DIC_NAME_SIG_IN_TRANS_TIME.at(cur_signal);
+      // Условие передачи строки с альманахом
+      if (((time%time_trans_sig) == 0) && (num_cur_str >= NUM_CON_ALM))
+      {
+        // Определяем индекс КА в массиве и устанавливаем флаг передачи альманаха в true
+        uint8_t ind_sat = num_cur_str - NUM_CON_ALM;
+        this->dic_flag_rec_alm[cur_point][ind_sat] = true;
+      }
+    }
+  }
 }
