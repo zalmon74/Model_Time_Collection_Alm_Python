@@ -13,6 +13,7 @@
 #define STD_PATH_DATA_IMITATOR "./../../Dropbox/Diplom/Model_Time_Collection_Alm_Python/"
 #define STD_NAME_ALM_FILE "alm/alm_17_07_2018_10_30_11_00_929_KA_24.txt"
 #define STD_NAME_DI_FILE "ci/ci_2021_10_22_08_11_02.json"
+#define STD_PATH_RESULT_FILE "results/"
 
 #define STD_TIME_SIMULATION 8*86400 // Стандартное время моделирования в сек.
 
@@ -60,6 +61,9 @@
 #define MIN_CORRECT_ANGLE_ELEV -60
 #define MAX_COORECT_ANGLE_ELEV 60
 
+// Значение оступа в JSON файле с результатами
+#define VALUE_INDENT_JSON_RESULT 2
+
 /* Ошибки */
 
 #define SUCCESSFUL_COMPLETION 0 // Успешное завершение
@@ -80,6 +84,8 @@
 #define ERROR_NULL_STEP -8
 // Не правильно задан УМ (вне диапозона)
 #define ERROR_SET_NOT_CORRECT_ANGLE_ELEV -8
+// Не удалось создать файл с результатами
+#define ERROR_CREATE_RESULT_FILE -9
 
 // Словарь для ЦИ
 //               Номер КА,  map сигн,  дост. сигн,  перед. строки

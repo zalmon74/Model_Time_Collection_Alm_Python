@@ -13,6 +13,7 @@ ImitatorReceivAlm::ImitatorReceivAlm()
   // Все пути по умолчанию указываем, что находятся по пути STD_PATH_DATA_IMITATOR
   this->path_alm_file = std::string(STD_PATH_DATA_IMITATOR)+std::string(STD_NAME_ALM_FILE);
   this->path_di_file  = std::string(STD_PATH_DATA_IMITATOR)+std::string(STD_NAME_DI_FILE);
+  this->path_result_file = std::string(STD_PATH_DATA_IMITATOR)+std::string(STD_PATH_RESULT_FILE);
   // Указываем параметры по умолчанию
   this->time_simulation = STD_TIME_SIMULATION;
   this->start_latitude = STD_START_LATITUDE;
@@ -117,6 +118,23 @@ int ImitatorReceivAlm::SetMinAngleElev(double angle_elev)
     output_err = ERROR_SET_NOT_CORRECT_ANGLE_ELEV;
   else
     this->min_angle_elev = angle_elev;
+  return output_err;
+}
+
+int ImitatorReceivAlm::SaveResultToJSONFile()
+{
+  int output_err = 0;
+  // Преобразовываем результаты в текст
+  json result_json_obj = this->dic_list_time_rec_alm;
+  std::string result_str = result_json_obj.dump(VALUE_INDENT_JSON_RESULT);
+  // Определяем текущую дату в виде строки
+  std::string cur_date_str = DeterminingCurrentDateSTR("_");
+  // Записываем результаты в файл
+  std::ofstream result_file(this->path_result_file+cur_date_str+".json", std::ios_base::out);
+  if (result_file.is_open())
+    result_file << result_str;
+  else
+    output_err = ERROR_CREATE_RESULT_FILE;
   return output_err;
 }
 

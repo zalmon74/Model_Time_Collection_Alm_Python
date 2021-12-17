@@ -96,6 +96,12 @@ public:
   */
   void SetTimeSimulation(uint32_t time) {this->time_simulation = time;}
 
+  /*! Сеттер для пути сохранения файла с результатами
+   * Вх. аргументы:
+   *  \@param: path_result_file - путь до файла с результатами
+  */
+  void SetPathResultFile(std::string path_result_file) {this->path_result_file = path_result_file; }
+
   /*! Метод для запуска имитатора
    * Вых. аргументы (Ошибки):
    *                          SUCCESSFUL_COMPLETION = Успешное завершение
@@ -108,12 +114,16 @@ public:
   */
   int StartImitator();
 
+  /*! Метод сохранения полученных результатов в файл */
+  int SaveResultToJSONFile();
+
 private:
 
   /* Поля */
 
   std::string path_alm_file; // Путь до файла с альманахом
   std::string path_di_file; // Путь до файла с сформированной ЦИ
+  std::string path_result_file; // Путь до файла с результатами
 
   std::vector<Almanah> vec_alm; // Вектор со значениями альманаха для каждого КА
   map_for_di di_system; // Словарь, который хранит в себе ЦИ, которую передает данная система

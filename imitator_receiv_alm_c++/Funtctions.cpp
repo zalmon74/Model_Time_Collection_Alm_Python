@@ -1,4 +1,5 @@
 #include <fstream>
+#include <ctime>
 
 #include "Functions.hpp"
 
@@ -46,4 +47,17 @@ double CalculationAngleElevation(Coordinates coor_1, Coordinates coor_2)
   // Рассчитываем УМ
   angle_elev = asin(numerator/denominator)*180/M_PI;
   return angle_elev;
+}
+
+std::string DeterminingCurrentDateSTR(std::string delimitor)
+{
+  // Формируем объект времени
+  std::time_t timer = std::time(0);
+  // Определяем текущее время
+  std::tm* now = std::localtime(&timer);
+  // Формируем строку с датой
+  std::string date_str = std::to_string(now->tm_year + 1900)+delimitor+
+                         std::to_string(now->tm_mon+1)+delimitor+
+                         std::to_string(now->tm_mday);
+  return date_str;
 }

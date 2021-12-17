@@ -31,5 +31,12 @@ Coordinates BLH2XYZ(Coordinates coor_blh);
 */
 double CalculationAngleElevation(Coordinates coor_1, Coordinates coor_2);
 
+/*! Функция определения текущей даты в виде строки YYYY_M_D
+ *  Вх. аргументы:
+ *    \@param: delimitor - разделить между числами
+ *  Вых. аргументы:
+ *    \@param: cur_date - текущая дата в виде строки
+*/
+std::string DeterminingCurrentDateSTR(std::string delimitor);
 
 #endif // FUNCTIONS_HPP
