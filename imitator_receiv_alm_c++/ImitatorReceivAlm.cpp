@@ -29,7 +29,7 @@ ImitatorReceivAlm::ImitatorReceivAlm()
 
 int ImitatorReceivAlm::StartImitator()
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
 
   // Считываем ЦИ с файла
   char* p_text_from_file = nullptr;
@@ -45,7 +45,7 @@ int ImitatorReceivAlm::StartImitator()
   // Рассчитываем кол-во секунд от 1996 года для расчета определения координат КА
   double second_rec_alm = ConvertDateOfSeconds2000(date_rec_alm);
   this->time_start_calculation_coor = static_cast<uint32_t>(second_rec_alm);
-  // Формируем необходимые словаря для моделировния
+  // Формируем необходимые словари для моделировния
   FormationAllDic();
   // Моделируем принятие альманаха
   ModelingReceivAlm();
@@ -57,7 +57,7 @@ int ImitatorReceivAlm::StartImitator()
 
 int ImitatorReceivAlm::SetPathAlmFile(std::string path_alm)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   // Проверяем на наличие файла
   bool file_exist = CheckFileExist(path_alm);
   if (!file_exist)
@@ -69,7 +69,7 @@ int ImitatorReceivAlm::SetPathAlmFile(std::string path_alm)
 
 int ImitatorReceivAlm::SetPathDIFile(std::string path_di)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   // Проверяем на наличие файла
   bool file_exist = CheckFileExist(path_di);
   if (!file_exist)
@@ -81,7 +81,7 @@ int ImitatorReceivAlm::SetPathDIFile(std::string path_di)
 
 int ImitatorReceivAlm::SetMapCoordinatesLatitude(int8_t start, int8_t end, uint8_t step)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   if (end < start)
     output_err = ERROR_SET_NOT_CORRERCT_LATITUDE;
   else if (step == 0)
@@ -97,7 +97,7 @@ int ImitatorReceivAlm::SetMapCoordinatesLatitude(int8_t start, int8_t end, uint8
 
 int ImitatorReceivAlm::SetMapCoordinatesLongitude(int16_t start, int16_t end, uint8_t step)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   if (end < start)
     output_err = ERROR_SET_NOT_CORRERCT_LONGITUDE;
   else if (step == 0)
@@ -113,7 +113,7 @@ int ImitatorReceivAlm::SetMapCoordinatesLongitude(int16_t start, int16_t end, ui
 
 int ImitatorReceivAlm::SetMinAngleElev(double angle_elev)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   if ((angle_elev < MIN_CORRECT_ANGLE_ELEV) || (angle_elev > MAX_COORECT_ANGLE_ELEV))
     output_err = ERROR_SET_NOT_CORRECT_ANGLE_ELEV;
   else
@@ -126,15 +126,7 @@ int ImitatorReceivAlm::SaveResultToJSONFile()
   int output_err = 0;
   // Преобразовываем результаты в текст
   json result_json_obj = this->dic_list_time_rec_alm;
-  std::string result_str = result_json_obj.dump(VALUE_INDENT_JSON_RESULT);
-  // Определяем текущую дату в виде строки
-  std::string cur_date_str = DeterminingCurrentDateSTR("_");
-  // Записываем результаты в файл
-  std::ofstream result_file(this->path_result_file+cur_date_str+".json", std::ios_base::out);
-  if (result_file.is_open())
-    result_file << result_str;
-  else
-    output_err = ERROR_CREATE_RESULT_FILE;
+  SaveJSONObjToFile(result_json_obj, this->path_result_file);
   return output_err;
 }
 
@@ -142,7 +134,7 @@ int ImitatorReceivAlm::SaveResultToJSONFile()
 
 int ImitatorReceivAlm::ReadDataAlmFromFile(std::string path_alm_file, std::vector<Almanah>& vec_alm, Date& date_rec_alm)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   // Предварительно отчищаем вектор с альманахом системы
   vec_alm.clear();
   // Считываем данные с файла
@@ -215,7 +207,7 @@ int ImitatorReceivAlm::ReadDataAlmFromFile(std::string path_alm_file, std::vecto
 
 int ImitatorReceivAlm::ReadDIFromFile(std::string path_di_file, char*& text_in_file)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   // Открываем файл для чтения
   std::ifstream file(path_di_file, std::ifstream::binary);
   if (file.is_open())
@@ -241,7 +233,7 @@ int ImitatorReceivAlm::ReadDIFromFile(std::string path_di_file, char*& text_in_f
 
 int ImitatorReceivAlm::Text2MapWithJSONObj(char* text, map_for_di& di)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   try
   {
     // Парсим текст и конвертируем его в json объект
@@ -306,7 +298,7 @@ void ImitatorReceivAlm::FormationDicFlagRecAlm(bl_coor_point cur_point)
 
 int ImitatorReceivAlm::ModelingReceivAlm()
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   // Вектор, который содержит координаты всех КА
   std::vector<Coordinates> vec_coor_all_sat;
   // Основной цикл по времени
@@ -322,7 +314,7 @@ int ImitatorReceivAlm::ModelingReceivAlm()
         bl_coor_point cur_point(latitude, longitude);
         output_err = ModelingReceivAlmOnePoint(time, vec_coor_all_sat, cur_point);
       }
-      if (output_err != SUCCESSFUL_COMPLETION)
+      if (output_err != SUCCESFUL_COMPLETION_D)
         break;
     }
   }
@@ -332,7 +324,7 @@ int ImitatorReceivAlm::ModelingReceivAlm()
 int ImitatorReceivAlm::ModelingReceivAlmOnePoint(uint32_t time, std::vector<Coordinates> &vec_coor_all_sat
                                                 ,bl_coor_point coor_bl_point)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   // Определяем текущие координаты принимающей антенны
   Coordinates coor_point;
   coor_point[0] = coor_bl_point.first*M_PI/180.0;
@@ -363,7 +355,7 @@ int ImitatorReceivAlm::ModelingReceivAlmOnePoint(uint32_t time, std::vector<Coor
 int ImitatorReceivAlm::CalculationCoordinatesAllSat(uint32_t curr_time, const std::vector<Almanah>& vec_alm
                                                    ,std::vector<Coordinates>& vec_sat_coor)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   // Предварительно отчищаем вектор с координатами КА
   vec_sat_coor.clear();
   // Цикл перебора альманаха
@@ -372,7 +364,7 @@ int ImitatorReceivAlm::CalculationCoordinatesAllSat(uint32_t curr_time, const st
     Coordinates coor_sat; // Рассчитанные координаты КА
     // Рассчитываем координаты КА
     output_err = CalcultionCoordinatesSat(curr_time, almanah, coor_sat);
-    if (output_err != SUCCESSFUL_COMPLETION)
+    if (output_err != SUCCESFUL_COMPLETION_D)
       break;
     vec_sat_coor.push_back(coor_sat);
   }
@@ -381,7 +373,7 @@ int ImitatorReceivAlm::CalculationCoordinatesAllSat(uint32_t curr_time, const st
 
 int ImitatorReceivAlm::CalcultionCoordinatesSat(uint32_t curr_time, const Almanah& almanah, Coordinates& sat_coor)
 {
-  int output_err = SUCCESSFUL_COMPLETION;
+  int output_err = SUCCESFUL_COMPLETION_D;
   double tmAlmVto = (almanah.n4 - 1); // число четырехлетних циклов от 2000г
   tmAlmVto *= 1461;                   // число дней от начала 2000г до конца предыдущего четырех.цикла
   tmAlmVto += (almanah.na - 1);       // число дней от начала 2000г до дня na
@@ -392,20 +384,34 @@ int ImitatorReceivAlm::CalcultionCoordinatesSat(uint32_t curr_time, const Almana
   }
   else
   {
+    // Тест
+    // i_cr = 64.8;
+    // T_cr = 40544
+//    almanah.na = 1452;
+//    almanah.lambdaT = 33571.625;
+//    almanah.dT = 0.01953124999975;
+//    almanah.ddT = 6.103515625E-05;
+//    almanah.lambda = -0.293967247009277;
+//    almanah.omega = 0.57867431640625;
+//    almanah.e = 0.000432968139648438;
+//    almanah.dI = -0.00012947082519531;
+//    curr_time = 51300+86400;
+
     // Константы
-    const double i_cr = 64.8;
-    const double T_cr = 43200.0;
+    const double i_cr = 64.8; //63.0;
+    const double T_cr = 40544; //43200.0;
     const double GM   = 398600.4418;
     const double a_e  = 6378.136;
     const double om_z = 7.2921150e-5;
     const double J0_2 = 1082.62575e-6;
 
     //Исходные данные приведены в радианах. В алгоритме ИКД приведено в циклах.
-    double dI = almanah.dI / M_PI;
-    double lambda = almanah.lambda / M_PI;
-    double omega = almanah.omega / M_PI;
+    double dI = almanah.dI;
+    double lambda = almanah.lambda;
+    double omega = almanah.omega;
 
     //1.
+//    double dt_pr = curr_time-almanah.lambdaT;
     double dt_pr = curr_time - (tmAlmVto+almanah.lambdaT);
     //2.
     double W = floor(dt_pr / (T_cr+almanah.dT));
@@ -493,9 +499,9 @@ int ImitatorReceivAlm::CalcultionCoordinatesSat(uint32_t curr_time, const Almana
     p = a_*(1.0-eps_*eps_);
     double r = p/(1+eps_*cos(v));
     // Кординаты сразу в м.
-    sat_coor[0] = r * (cos(lym_)*cos(u)-sin(lym_)*sin(u)*cos(i_)) *1000;
-    sat_coor[1] = r * (sin(lym_)*cos(u)+cos(lym_)*sin(u)*cos(i_)) *1000;
-    sat_coor[2] = r * sin(u)*sin(i_)*1000;
+    sat_coor[0] = r * (cos(lym_)*cos(u)-sin(lym_)*sin(u)*cos(i_));
+    sat_coor[1] = r * (sin(lym_)*cos(u)+cos(lym_)*sin(u)*cos(i_));
+    sat_coor[2] = r * sin(u)*sin(i_);
   }
 
   return output_err;

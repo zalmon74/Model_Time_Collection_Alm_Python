@@ -3,8 +3,12 @@
 #ifndef FUNCTIONS_HPP
 #define FUNCTIONS_HPP
 
-#include <ImitatorReceivAlm.hpp>
 #include <string>
+
+#include "ImitatorReceivAlm.hpp"
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 /*! Функция определения наличия файла по заданному пути
  *  Вх аргументы:
@@ -38,5 +42,23 @@ double CalculationAngleElevation(Coordinates coor_1, Coordinates coor_2);
  *    \@param: cur_date - текущая дата в виде строки
 */
 std::string DeterminingCurrentDateSTR(std::string delimitor);
+
+/*! Функция сохранения json объекта в файл
+ *  Вх. аргументы:
+ *    \@param: obj - объект, который необходимо сохранить в файл
+ *    \@param: path_file - путь до файла
+ *  Вых. аргументы:
+ *    \@param - Ошибки
+*/
+int SaveJSONObjToFile(json obj, std::string path_file);
+
+/*! Функция разделения строки по подстроками по входному разделителю
+ *  Вх. аргументы:
+ *    \@param: str - строка, которую необходимо разделить
+ *    \@param: delim - разделитель
+ *  Вых. аргументы:
+ *    \@param: vec_str - вектор, который содержит подстроки
+*/
+std::vector<std::string> SplitString(const std::string &str, char delim='=');
 
 #endif // FUNCTIONS_HPP

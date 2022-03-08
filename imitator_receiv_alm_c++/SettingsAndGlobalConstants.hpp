@@ -15,14 +15,14 @@
 #define STD_NAME_DI_FILE "ci/ci_2021_10_22_08_11_02.json"
 #define STD_PATH_RESULT_FILE "results/"
 
-#define STD_TIME_SIMULATION 8*86400 // Стандартное время моделирования в сек.
+#define STD_TIME_SIMULATION 1*86400 // Стандартное время моделирования в сек.
 
 // Значения по умолчанию карты моделирования
-#define STD_START_LATITUDE 0//-60 // Начало широты для моделирования в град.
-#define STD_END_LATITUDE    0//60 // Конец широты для моделирования в град.
+#define STD_START_LATITUDE -60 // Начало широты для моделирования в град.
+#define STD_END_LATITUDE    60 // Конец широты для моделирования в град.
 #define STD_STEP_LATITUDE    2 // Шаг по широте для моделирования в град.
-#define STD_START_LONGITUDE 0//-180 // Начало долготы для моделирования в град.
-#define STD_END_LONGITUDE    0//180 // Конец долготы для моделирования в град.
+#define STD_START_LONGITUDE -180 // Начало долготы для моделирования в град.
+#define STD_END_LONGITUDE    180 // Конец долготы для моделирования в град.
 #define STD_STEP_LONGITUDE     3 // Шаг по долготе для моделирования в град.
 #define STD_MIN_ANGLE_ELEV 5 // Минимальный УМ, при котором КА считается видимым
 #define HEIGHT_POS 0 //  Высота антенны, принимающая альманах
@@ -66,7 +66,11 @@
 
 /* Ошибки */
 
-#define SUCCESSFUL_COMPLETION 0 // Успешное завершение
+#define SUCCESFUL_COMPLETION_D 0
+#define ERROR_EMPTY_D -2
+#define ERROR_MISS_FILE_D -3
+
+//#define SUCCESSFUL_COMPLETION 0 // Успешное завершение
 #define ERROR_OLD_ALM -1 // Старый альманах (Альманах устарел больше чем на 90 дней)
 // Файл c альманахом по заданному пути невозможно открыть/не существует
 #define ERROR_MISS_ALM_FILE -2
@@ -93,12 +97,12 @@ typedef std::map<std::string, std::map<std::string, std::vector<int>>> map_for_d
 // Координаты точки типа BL (широта - долгота)
 typedef std::pair<int8_t, int16_t> bl_coor_point;
 
-static const uint8_t  UNDEFINE_UINT8  = 0xFF              ;
-static const int16_t  UNDEFINE_INT16  = 0x7FFF            ;
-static const uint16_t UNDEFINE_UINT16 = 0xFFFF            ;
-static const int32_t  UNDEFINE_INT32  = 0x7FFFFFFF        ;
-static const uint32_t UNDEFINE_UINT32 = 0xFFFFFFFF        ;
-static const int64_t  UNDEFINE_INT64  = 0x7FFFFFFFFFFFFFFF;
+#define UNDEFINE_UINT8  0xFF
+#define UNDEFINE_INT16  0x7FFF
+#define UNDEFINE_UINT16 0xFFFF
+#define UNDEFINE_INT32  0x7FFFFFFF
+#define UNDEFINE_UINT32 0xFFFFFFFF
+#define UNDEFINE_INT64  0x7FFFFFFFFFFFFFFF
 
 // Константы Земли, которые необходимы для перевода координат
 static const double R_EARHT = 6371.136; // Радиус Земли, [км]

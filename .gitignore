@@ -174,7 +174,12 @@ cython_debug/
 main.cpp
 *.pro
 *.pro.*
+*.idea*
+*build*
+*construct_drawing*
 
 ci
 alm
 results
+
+sequencing_algorithm
