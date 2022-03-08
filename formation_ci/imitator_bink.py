@@ -240,7 +240,7 @@ def generator_ci_for_all_sat(mat_av_sig_for_sat: matrix, vec_count_psk: array
   ci = {}
   # Цикл перебора КА
   for ind_sat in range(count_sat):
-    ci[ind_sat+1] = generator_ci_for_all_signals(mat_av_sig_for_sat[ind_sat, :]
+    ci[int(ind_sat+1)] = generator_ci_for_all_signals(mat_av_sig_for_sat[ind_sat, :]
                                                 ,vec_count_psk ,vec_l_psk
                                                 ,arr_n_as[ind_sat, :, :], mat_sync
                                                 ,mat_pps, mat_kps, mat_prior

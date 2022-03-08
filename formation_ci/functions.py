@@ -83,8 +83,8 @@ def get_seq_alm(count_sat: int, ind_sat: int, max_count_sig: int, ind_sig: int
        (ind_sig == gc.DIC_NAME_SIG_IN_IND["L3OC"]):
     # Если сигналы находится в одной группе, то они сдвигаются на половину
     # кол-во КА
-    start = vec_seq[ind_sat]*step_seq+count_sat/2*step_seq-1
-    while (start > (count_sat - 1)):
+    start = int(vec_seq[ind_sat]*step_seq+count_sat/2*step_seq-1)
+    while ((start > (count_sat - 1)) and (count_sat > 1)):
       start -= (count_sat - 1)
       start = int(start)
     first_base  = list(range(start, count_sat))
