@@ -92,8 +92,8 @@ def decode_mat_mi_n(mat_mi_n: matrix):
         vec_l_psk[ind_sig] = obj.l_psk
         vec_t_oi[ind_sig]  = obj.t_oi
         vec_t_as[ind_sig]  = obj.t_as
-        dic_ind_sig_name_sig[obj.type_sig] = obj.name_sig
-        dic_name_sig_ind_sig[obj.name_sig] = obj.type_sig
+        # dic_ind_sig_name_sig[obj.type_sig] = obj.name_sig
+        # dic_name_sig_ind_sig[obj.name_sig] = obj.type_sig
       break;
   return vec_l_psk, vec_t_oi, vec_t_as, \
          dic_ind_sig_name_sig, dic_name_sig_ind_sig

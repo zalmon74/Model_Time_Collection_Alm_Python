@@ -1,5 +1,6 @@
 from numpy import array 
 
+
 class STRUCT_MI_N():
   """
   Структура описания фразы УИ-Н (Управляющая Информация - Навигационная)
@@ -17,12 +18,12 @@ class STRUCT_MI_N():
                  которые передается в i-ой строке - (1...63)
   """
 
-  def __init__(self, n_ka_sys: int, n_ka_con: int, type_sig: int, name_sig: str
+  def __init__(self, n_ka_sys: int, n_ka_con: int, type_sig: int
               ,l_as: int, l_psk: int, t_oi: int, t_as: int, vec_n_as: array):
     self.n_ka_sys = n_ka_sys
     self.n_ka_con = n_ka_con
     self.type_sig = type_sig
-    self.name_sig = name_sig
+    # self.name_sig = name_sig
     self.l_as     = l_as
     self.l_psk    = l_psk
     self.t_oi     = t_oi
@@ -43,6 +44,7 @@ class STRUCT_MI_N():
     print_str += f"{self.t_as=} \n"
     print_str += f"{self.vec_n_as=} \n"
     print(print_str)
+
 
 class STRUCT_E_STR():
   """
@@ -100,13 +102,13 @@ class STRUCT_MI_EPI():
   """
 
   def __init__(self, n_ka_sys: int, n_ka_con: int, type_str: int, type_sig: int
-              ,name_sig: str, t_oi: int, kps: int, sync: int, pps: int
+              ,t_oi: int, kps: int, sync: int, pps: int
               ,prior: int, pvs: bool):
     self.n_ka_sys = n_ka_sys
     self.n_ka_con = n_ka_con
     self.type_str = type_str
     self.type_sig = type_sig
-    self.name_sig = name_sig 
+    # self.name_sig = name_sig
     self.t_oi     = t_oi
     self.kps      = kps
     self.sync     = sync
