@@ -164,3 +164,19 @@ class ConfSettingsForSequencingAlgorithm:
         self.ind_calcui_epis_pps_psk = None
         self.ind_calcui_epis_prio_str = None
         self.ind_calcui_epis_pvs_psk = None
+
+
+class ConfSettingsForFormationCI:
+    """
+    Класс, который содержит конфигурационные данные для формирования ЦИ
+    """
+    def __init__(self):
+        # Значение, с которого начинается условный номер КА
+        self.num_con_alm = None
+        # Условное значение, которое определяет, что данная строка не может передоваться
+        # в соот. сигнале
+        self.not_bel_str = None
+        # Время в сек. на формирование ЦИ
+        self.max_time = None
+        # путь до файла с ЦИ
+        self.patH_to_save_ci_file = None
