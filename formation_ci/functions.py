@@ -155,12 +155,14 @@ def save_ci_in_file(ci):
     json.dump(ci, file, indent=2)
 
 
-def parsing_nav_info_seq_alg_result_file(nav_obj_json):
+def parsing_nav_info_seq_alg_result_file(nav_obj_json, conf_par_seq: structs.ConfSettingsForSequencingAlgorithm):
     """
     Функция для парсинга информации навигационной составляющей файла
 
     Вх. аргументы:
         # nav_obj_json - навигационная составляющая файла
+        # conf_par_seq - объект с конфигурационными параметрами для парсинга файла с результатами работы
+            алгоритма формирования последовательностей
     """
     mat_mi_n = []
     arr_nav = []
@@ -169,21 +171,21 @@ def parsing_nav_info_seq_alg_result_file(nav_obj_json):
         for ind_obj in range(len(obj)):
             value = obj[ind_obj]
             # Заменить маг. числа на данные из конфигурационного файла
-            if ind_obj == 0:
+            if ind_obj == conf_par_seq.ind_calcui_nav_nka:
                 num_sat = value
-            elif ind_obj == 1:
+            elif ind_obj == conf_par_seq.ind_calcui_nav_signalid:
                 signalid = value
-            elif ind_obj == 2:
+            elif ind_obj == conf_par_seq.ind_calcui_nav_systempoint:
                 systempoint = value
-            elif ind_obj == 3:
+            elif ind_obj == conf_par_seq.ind_calcui_nav_l_as:
                 l_as = value
-            elif ind_obj == 4:
+            elif ind_obj == conf_par_seq.ind_calcui_nav_l_psk:
                 l_psk = value
-            elif ind_obj == 5:
+            elif ind_obj == conf_par_seq.ind_calcui_nav_n_st:
                 n_st = value
-            elif ind_obj == 6:
+            elif ind_obj == conf_par_seq.ind_calcui_nav_t_oi:
                 t_oi = value
-            elif ind_obj == 7:
+            elif ind_obj == conf_par_seq.ind_calcui_nav_t_as:
                 t_as = value
             else:
                 if obj[ind_obj] != 255:
@@ -203,12 +205,14 @@ def parsing_nav_info_seq_alg_result_file(nav_obj_json):
     return mat_mi_n
 
 
-def parsing_epis_info_seq_alg_result_file(epis_obj_json):
+def parsing_epis_info_seq_alg_result_file(epis_obj_json, conf_par_seq: structs.ConfSettingsForSequencingAlgorithm):
     """
     Функция для парсинга информации эпизодической составляющей файла
 
     Вх. аргументы:
         # epis_obj_json - навигационная составляющая файла
+        # conf_par_seq - объект с конфигурационными параметрами для парсинга файла с результатами работы
+            алгоритма формирования последовательностей
     """
     arr_mi_epis = []  # Выходной массив
     mat_epis = []  # Матрица, которая содержит параметры строк для каждого сигнала
@@ -217,31 +221,31 @@ def parsing_epis_info_seq_alg_result_file(epis_obj_json):
         for ind_obj in range(len(epis_obj)):
             value = epis_obj[ind_obj]
             # Заменить маг. числа на параметры из конф. файла
-            if ind_obj == 0:
+            if ind_obj == conf_par_seq.ind_calcui_epis_nka:
                 num_sat = value
-            elif ind_obj == 1:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_signalid:
                 signalid = value
-            elif ind_obj == 2:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_systempoint:
                 systempoint = value
-            elif ind_obj == 3:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_id:
                 num_str = value
-            elif ind_obj == 4:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_idsi:
                 idsi = value
-            elif ind_obj == 5:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_size:
                 size = value
-            elif ind_obj == 6:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_mode:
                 mode = value
-            elif ind_obj == 7:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_t_str:
                 t_str = value
-            elif ind_obj == 8:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_kps_str:
                 kps = value
-            elif ind_obj == 9:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_ss_str:
                 ss_str = value
-            elif ind_obj == 10:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_pps_psk:
                 pps = value
-            elif ind_obj == 11:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_prio_str:
                 prior = value
-            elif ind_obj == 12:
+            elif ind_obj == conf_par_seq.ind_calcui_epis_pvs_psk:
                 pvs = value
         mi_epis = structs.STRUCT_MI_EPI(systempoint, num_sat, num_str, signalid, t_str, kps, ss_str, pps, prior, pvs)
         if len(arr_str) == 0 or (arr_str[-1].n_ka_sys == systempoint and arr_str[-1].type_sig == signalid):
@@ -284,25 +288,120 @@ def convert_list_to_array_3(arr_mi_epis):
                 if ind_str < len(arr_mi_epis[ind_sat][ind_sig]):
                     output_arr[ind_sat][ind_sig][ind_str] = arr_mi_epis[ind_sat][ind_sig][ind_str]
                 else:
-                    # output_arr[ind_sat][ind_sig] = output_arr[ind_sat][ind_sig][output_arr[ind_sat][ind_sig] != None]
-                    # del output_arr[ind_sat][ind_sig][ind_str]
                     pass
     return output_arr
 
 
-def read_result_sequencing_alg_result_file(path_file: str):
+def read_result_sequencing_alg_result_file(path_file: str, conf_par_seq: structs.ConfSettingsForSequencingAlgorithm):
     """
     Функция чтения файла с результатами алгоритма, который формирует последовательности
 
     Вх. аргументы:
         # path_file - путь до файла
+        # conf_par_seq - объект с конфигурационными параметрами для парсинга файла с результатами работы
+            алгоритма формирования последовательностей
     """
     with open(path_file, 'r', encoding=gc.ENCODING_FOR_FILE) as file:
         json_obj = json.load(file)
     epis_obj_json = json_obj["EPIS"]
     nav_obj_json = json_obj["NAV"]
-    mat_mi_n = parsing_nav_info_seq_alg_result_file(nav_obj_json)
-    arr_mi_epis = parsing_epis_info_seq_alg_result_file(epis_obj_json)
+    mat_mi_n = parsing_nav_info_seq_alg_result_file(nav_obj_json, conf_par_seq)
+    arr_mi_epis = parsing_epis_info_seq_alg_result_file(epis_obj_json, conf_par_seq)
     mat_mi_n = array(mat_mi_n)
     arr_mi_epis = convert_list_to_array_3(arr_mi_epis)
     return mat_mi_n, arr_mi_epis
+
+
+def read_conf_file(path_file: str) -> list:
+    """
+    Функция чтения конфигурационного файла
+
+    Вх. аргументы:
+        # path_fil - путь до файла
+
+    Вых. аргументы:
+        # par_list - считанный список со строками, которые содержат конфигурационные параметры
+    """
+    with open(path_file, 'r') as file:
+        par_list = file.readlines()
+
+    return par_list
+
+
+def convert_str_list_par_seq_alg(par_list: list) -> structs.ConfSettingsForSequencingAlgorithm:
+    """
+    Функция преобразлвания из списка с конфигурационными параметрами для алгоритма формирования последовательностей
+    в соответствующую структуру
+
+    Вх. аргументы:
+        # par_list - Список с соответствующими параметрами
+    Вых. аргументы:
+        par_seq_alg - объект с считанными параметрами
+    """
+    par_seq_alg = structs.ConfSettingsForSequencingAlgorithm()
+    for par in par_list:
+        par_str, value = par.split('=')
+        par_str = par_str.strip()
+        value = int(value)
+        if par_str == "IND_CALCUINAV_NKA":
+            par_seq_alg.ind_calcui_nav_nka = value
+        elif par_str == "IND_CALCUINAV_SIGNALID":
+            par_seq_alg.ind_calcui_nav_signalid = value
+        elif par_str == "IND_CALCUINAV_SYSTEMPOINT":
+            par_seq_alg.ind_calcui_nav_systempoint = value
+        elif par_str == "IND_CALCUINAV_L_AS":
+            par_seq_alg.ind_calcui_nav_l_as = value
+        elif par_str == "IND_CALCUINAV_L_PSK":
+            par_seq_alg.ind_calcui_nav_l_psk = value
+        elif par_str == "IND_CALCUINAV_N_ST":
+            par_seq_alg.ind_calcui_nav_n_st = value
+        elif par_str == "IND_CALCUINAV_T_OI":
+            par_seq_alg.ind_calcui_nav_t_oi = value
+        elif par_str == "IND_CALCUINAV_T_AS":
+            par_seq_alg.ind_calcui_nav_t_as = value
+        elif par_str == "IND_CALCUINAV_START_NAVPOINTS":
+            par_seq_alg.ind_calcui_nav_start_navpoints = value
+        elif par_str == "IND_CALCUINAV_END_NAVPOINTS":
+            par_seq_alg.ind_calcui_nav_end_navpoints = value
+        elif par_str == "IND_CALCUIEPIS_NKA":
+            par_seq_alg.ind_calcui_epis_nka = value
+        elif par_str == "IND_CALCUIEPIS_SIGNALID":
+            par_seq_alg.ind_calcui_epis_signalid = value
+        elif par_str == "IND_CALCUIEPIS_SYSTEMPOINT":
+            par_seq_alg.ind_calcui_epis_systempoint = value
+        elif par_str == "IND_CALCUIEPIS_ID":
+            par_seq_alg.ind_calcui_epis_id = value
+        elif par_str == "IND_CALCUIEPIS_IDSI":
+            par_seq_alg.ind_calcui_epis_idsi = value
+        elif par_str == "IND_CALCUIEPIS_SIZE":
+            par_seq_alg.ind_calcui_epis_size = value
+        elif par_str == "IND_CALCUIEPIS_MODE":
+            par_seq_alg.ind_calcui_epis_mode = value
+        elif par_str == "IND_CALCUIEPIS_T_STR":
+            par_seq_alg.ind_calcui_epis_t_str = value
+        elif par_str == "IND_CALCUIEPIS_KPS_STR":
+            par_seq_alg.ind_calcui_epis_kps_str = value
+        elif par_str == "IND_CALCUIEPIS_SS_STR":
+            par_seq_alg.ind_calcui_epis_ss_str = value
+        elif par_str == "IND_CALCUIEPIS_PPS_PSK":
+            par_seq_alg.ind_calcui_epis_pps_psk = value
+        elif par_str == "IND_CALCUIEPIS_PRIO_STR":
+            par_seq_alg.ind_calcui_epis_prio_str = value
+        elif par_str == "IND_CALCUIEPIS_PVS_PSK":
+            par_seq_alg.ind_calcui_epis_pvs_psk = value
+    return par_seq_alg
+
+
+def get_conf_par_seq_alg(path_file) -> structs.ConfSettingsForSequencingAlgorithm:
+    """
+    Функция получения объекта с конфигурационными параметрами для алгоритма формирования последовательностей
+
+    Вх. аргументы:
+        # path_file - путь до конфигурационного файла
+
+    Вых. аргументы:
+        # par_seq_alg - объект с конфигурационными параметрами
+    """
+    sequenc_alg_par = read_conf_file(path_file)
+    par_seq_alg = convert_str_list_par_seq_alg(sequenc_alg_par)
+    return par_seq_alg

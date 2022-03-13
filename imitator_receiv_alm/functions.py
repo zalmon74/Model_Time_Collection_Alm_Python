@@ -377,7 +377,7 @@ def modeling_receiv_alm():
     raise Exception(f"Файлс с ЦИ ({path_file_di}) отсутствует или пуст")
   # Считываем альманах с файла
   tup_alm = read_my_alm_file(gc.PATH_ALM+gc.STD_NAME_ALM_FILE)
-  # Формируем словарь, который будет содержать флаги принятия альманаха для соот.
+  # Формируем словарь, который будет содержать флаги приема альманаха для соот.
   # точки
   dic_f_receiv_alm = formation_dict_f_receiv_alm(tup_alm[2])
   # Основной цикл по времени
