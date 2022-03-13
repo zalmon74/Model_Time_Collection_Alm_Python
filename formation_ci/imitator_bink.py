@@ -1,7 +1,7 @@
 from numpy import mat, matrix, array, zeros, where, nonzero, full
 
 import global_constants as gc
-import support_function as sf
+from functions import my_round_vec
 
 def imitator_bink(mat_mi_n: matrix, arr_mi_epi: array):
   """
@@ -212,7 +212,7 @@ def calculation_count_psk_for_all_signals(vec_l_psk: array):
     # Рассчитываем кол-во ПСК
     vec_count_psk[ind_sig] = gc.MAX_TIME/(vec_l_psk[ind_sig]*gc.DIC_NAME_SIG_IN_TRANS_TIME[name_sig])
   # Округляем кол-во ПСК в большую сторону
-  vec_count_psk = sf.my_round_vec(vec_count_psk)
+  vec_count_psk = my_round_vec(vec_count_psk)
   return vec_count_psk
 
 def generator_ci_for_all_sat(mat_av_sig_for_sat: matrix, vec_count_psk: array

@@ -1,7 +1,6 @@
 import numpy as np
 
 import global_constants as gc
-import support_function as sf
 import functions as f
 import imitator_bink as ib
 

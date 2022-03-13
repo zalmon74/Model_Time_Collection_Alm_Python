@@ -405,3 +405,24 @@ def get_conf_par_seq_alg(path_file) -> structs.ConfSettingsForSequencingAlgorith
     sequenc_alg_par = read_conf_file(path_file)
     par_seq_alg = convert_str_list_par_seq_alg(sequenc_alg_par)
     return par_seq_alg
+
+
+def my_round_vec(vec_val):
+    """
+    Функция округления вектор каждого эл. до ближайшего целого
+
+    Вх. аргументы:
+    # vec_val - вектор, которой необходимо окргулить
+
+    Вых. аргументы:
+    # vec_out - округленный вектор
+    """
+    vec_out = empty(vec_val.size, dtype=int)
+    # Перебор эл. вектора
+    for ind in range(vec_val.size):
+        el = vec_val[ind]
+        if (el > int(el)):
+            vec_out[ind] = int(el)+1
+        else:
+            vec_out[ind] = int(el)
+    return vec_out
