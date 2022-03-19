@@ -5,6 +5,7 @@
 
 #include "SettingsAndGlobalConstants.hpp"
 #include "Structs.hpp"
+#include "../sequencing_algorithm/include/my_analog_structs.hpp"
 
 class Parser
 {
@@ -15,6 +16,8 @@ protected:
   ErrorsSettings errors;
 
 public:
+
+  Parser();
 
   /* Методы */
 

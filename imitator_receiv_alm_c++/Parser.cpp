@@ -6,6 +6,9 @@
 
 /* Parser: public */
 
+Parser::Parser() : errors(PathsFiles(STD_PATH_PATHS).path_errors_file)
+{}
+
 int Parser::SetPathFile(std::string path_file)
 {
   int output_err = errors.succesful_completion;
@@ -24,7 +27,7 @@ int AlmanahParser::ReadFile()
 {
   int output_err = errors.succesful_completion;
   bool f_file_exit = CheckFileExist(this->path_to_file);
-  ImitatorReceivAlmSettings settings(PathsFiles(STD_PATH_PATHS).path_di_file
+  ImitatorReceivAlmSettings settings(PathsFiles(STD_PATH_PATHS).path_conf_formation_di
                                     ,PathsFiles(STD_PATH_PATHS).path_conf_imitator_receiv_alm);
   if (f_file_exit)
   {
