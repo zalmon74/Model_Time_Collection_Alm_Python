@@ -61,10 +61,11 @@ std::string DeterminingCurrentDateSTR(std::string delimitor)
   return date_str;
 }
 
-int SaveJSONObjToFile(json obj, std::string path_file)
+int SaveJSONObjToFile(json obj, std::string path_file, int value_indent_json_result)
 {
-  int output_err = SUCCESFUL_COMPLETION_D;
-  std::string result_str = obj.dump(VALUE_INDENT_JSON_RESULT);
+  ErrorsSettings errors(STD_PATH_PATHS);
+  int output_err = errors.succesful_completion;
+  std::string result_str = obj.dump(value_indent_json_result);
   // Определяем текущую дату в виде строки
   std::string cur_date_str = DeterminingCurrentDateSTR("_");
   // Записываем результаты в файл
@@ -72,7 +73,7 @@ int SaveJSONObjToFile(json obj, std::string path_file)
   if (result_file.is_open())
     result_file << result_str;
   else
-    output_err = ERROR_CREATE_RESULT_FILE;
+    output_err = errors.error_create_result_file;
   result_file.close();
   return output_err;
 }

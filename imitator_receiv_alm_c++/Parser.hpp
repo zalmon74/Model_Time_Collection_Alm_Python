@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "../sequencing_algorithm/include/my_analog_structs.hpp"
 #include "SettingsAndGlobalConstants.hpp"
+#include "Structs.hpp"
 
 class Parser
 {
@@ -12,6 +12,7 @@ protected:
   char comment_separator_symb = '#'; // Символ для определения комментариев в файле
 
   std::string path_to_file; // Путь до файла
+  ErrorsSettings errors;
 
 public:
 

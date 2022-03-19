@@ -8,11 +8,11 @@
 
 int Parser::SetPathFile(std::string path_file)
 {
-  int output_err = SUCCESFUL_COMPLETION_D;
+  int output_err = errors.succesful_completion;
   if (path_file.size() == 0)
-    output_err = ERROR_EMPTY_D;
+    output_err = errors.error_empty;
   else if (!CheckFileExist(path_file))
-    output_err = ERROR_MISS_FILE_D;
+    output_err = errors.error_miss_file;
   else
     this->path_to_file = path_file;
   return output_err;
@@ -22,8 +22,10 @@ int Parser::SetPathFile(std::string path_file)
 
 int AlmanahParser::ReadFile()
 {
-  int output_err = SUCCESFUL_COMPLETION_D;
+  int output_err = errors.succesful_completion;
   bool f_file_exit = CheckFileExist(this->path_to_file);
+  ImitatorReceivAlmSettings settings(PathsFiles(STD_PATH_PATHS).path_di_file
+                                    ,PathsFiles(STD_PATH_PATHS).path_conf_imitator_receiv_alm);
   if (f_file_exit)
   {
     // Считываем файл
@@ -38,29 +40,20 @@ int AlmanahParser::ReadFile()
       uint16_t na = UNDEFINE_UINT16;
       double temp = NAN;
       // Считываем первую строку с файла (В каждой строке файла COUNT_VAR_TO_STR_IN_FILE_ALM)
-      for (uint8_t ind_r = 0; ind_r < COUNT_VAR_TO_STR_IN_FILE_ALM; ind_r++)
+      for (uint8_t ind_r = 0; ind_r < settings.count_var_to_str_in_file_alm; ind_r++)
       {
-        switch(ind_r)
-        {
-        case IND_DAY_REC_FILE_ALM:
+        if (ind_r == settings.ind_day_rec_file_alm)
           file >> day;
-          break;
-        case IND_MON_REC_FILE_ALM:
+        else if (ind_r == settings.ind_mon_rec_file_alm)
           file >> mon;
-          break;
-         case IND_YEAR_REC_FILE_ALM:
+         else if (ind_r == settings.ind_year_rec_file_alm)
           file >> year;
-          break;
-        case IND_NA_FILE_ALM:
+        else if (ind_r == settings.ind_NA_file_alm)
           file >> na;
-          break;
-        case IND_COUNT_SAT_FILE_ALM:
+        else if (ind_r == settings.ind_count_sat_file_alm)
           file >> count_sat;
-          break;
-         default:
+         else
           file >> temp;
-          break;
-        }
       }
       // Рассчитываем число четырехлетних циклов от 1996 г.
       uint8_t n4 = static_cast<uint8_t>((year-1996)/4);
@@ -87,6 +80,6 @@ int AlmanahParser::ReadFile()
     }
   }
   else
-    output_err = ERROR_MISS_FILE_D;
+    output_err = errors.error_miss_file;
   return output_err;
 }

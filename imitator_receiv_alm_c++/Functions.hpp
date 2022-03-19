@@ -47,10 +47,11 @@ std::string DeterminingCurrentDateSTR(std::string delimitor);
  *  Вх. аргументы:
  *    \@param: obj - объект, который необходимо сохранить в файл
  *    \@param: path_file - путь до файла
+ *    \@param: value_indent_json_result - количество символом для разделителя в json
  *  Вых. аргументы:
  *    \@param - Ошибки
 */
-int SaveJSONObjToFile(json obj, std::string path_file);
+int SaveJSONObjToFile(json obj, std::string path_file, int value_indent_json_result);
 
 /*! Функция разделения строки по подстроками по входному разделителю
  *  Вх. аргументы:

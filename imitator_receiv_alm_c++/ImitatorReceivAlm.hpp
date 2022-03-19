@@ -8,7 +8,8 @@
 #include <list>
 #include <array>
 
-#include "Almanah.hpp"
+#include "Structs.hpp"
+#include "SettingsAndGlobalConstants.hpp"
 
 /* Структура для описание координатов КА */
 struct Coordinates : std::array<double,3>
@@ -38,25 +39,6 @@ class ImitatorReceivAlm
 public:
   /* Конструкторы */
   ImitatorReceivAlm();
-
-  /* Сеттеры */
-  /*! Сеттер для установки пути до файла с альманахом
-   * Вх. аргументы:
-   *  \@param: path_alm - путь до файла с альманахом, который необходимо установить в имитаторе
-   * Вых. аргументы:
-   *  \@param: SUCCESSFUL_COMPLETION = Успешное завершение
-   *           ERROR_MISS_ALM_FILE = Файл c альманахом по данному пути невозможно открыть/не существует
-  */
-  int SetPathAlmFile(std::string path_alm);
-
-  /*! Сеттер для установки пути до файла с ЦИ
-   * Вх. аргументы:
-   *  \@param: path_di - путь до файла с ЦИ, который необходимо установить в имитаторе
-   * Вых. аргументы:
-   *  \@param: SUCCESSFUL_COMPLETION = Успешное завершение
-   *           ERROR_MISS_DI_FILE = Файл c альманахом по данному пути невозможно открыть/не существует
-  */
-  int SetPathDIFile(std::string path_di);
 
   /*! Сеттер для установки парамтеров широты для формирования карты моделирования
    * Вх. аргументы:
@@ -94,13 +76,7 @@ public:
    * Вх. аргументы:
    *  \@param: time - время, которое необходимо установить, [сек.]
   */
-  void SetTimeSimulation(uint32_t time) {this->time_simulation = time;}
-
-  /*! Сеттер для пути сохранения файла с результатами
-   * Вх. аргументы:
-   *  \@param: path_result_file - путь до файла с результатами
-  */
-  void SetPathResultFile(std::string path_result_file) {this->path_result_file = path_result_file; }
+  void SetTimeSimulation(uint32_t time) {this->settings.time_simulation = time;}
 
   /*! Метод для запуска имитатора
    * Вых. аргументы (Ошибки):
@@ -121,9 +97,9 @@ private:
 
   /* Поля */
 
-  std::string path_alm_file; // Путь до файла с альманахом
-  std::string path_di_file; // Путь до файла с сформированной ЦИ
-  std::string path_result_file; // Путь до файла с результатами
+  PathsFiles path_files; // Пути до необходимых файлов
+  ErrorsSettings errors; // Значение ошибок
+  ImitatorReceivAlmSettings settings; // Настроечные параметры для моделирования
 
   std::vector<Almanah> vec_alm; // Вектор со значениями альманаха для каждого КА
   map_for_di di_system; // Словарь, который хранит в себе ЦИ, которую передает данная система
@@ -141,19 +117,7 @@ private:
   // second = список времен
   std::map<bl_coor_point, std::vector<bool>> dic_flag_rec_alm;
 
-  uint32_t time_simulation; // Время моделирования, [сек]
   uint32_t time_start_calculation_coor; // Начальное время на которое необходимо рассчитывать коориданты КА, [сек]
-
-  /* Широта изменяется в диапозоне [-90:90] */
-  int8_t  start_latitude;   // Начало широты для моделирования, [град.]
-  int8_t  end_latitude;     // Конец широты для моделирования, [град.]
-  uint8_t step_latitude;    // Шаг по широте, [град.]
-  /* Долгота изменяется в диапозоне [-180:180] */
-  int16_t start_longitude; // Начало долготе для моделирования, [град.]
-  int16_t end_longitude;   // Конец долготе для моделирования, [град.]
-  uint8_t step_longitude;  // Шаг по долготе, [град.]
-  // Минимальный УМ, при котором КА считается видимым
-  double min_angle_elev;
 
   /* Методы */
 

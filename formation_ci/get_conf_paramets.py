@@ -113,7 +113,7 @@ def get_path_conf_form_ci_file(par_list: list):
         value = value.strip()
         if par_str == "PATH_CONF_FORMATION_CI":
             path_to_conf_form_ci = value
-        elif par_str == "RESULT_CI_FORMATION_FILE":
+        elif par_str == "RESULT_CI_FORMATION":
             path_to_save_ci = value
     return path_to_conf_form_ci, path_to_save_ci
 
